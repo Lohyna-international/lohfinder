@@ -8,3 +8,6 @@ edition = "2018"
 [dependencies]
 cloud-pubsub = "0.7.0"
 tokio={ version="*", features=["full"] }
+chrono = "*"
+serde_json = {version = "*", features=["derive"]}
+sled = "*"
