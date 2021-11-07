@@ -1,0 +1,30 @@
+{   "users": [{
+                "name" : "oleh",
+                "username" : "andrus",
+                "pass" : "admin123",
+                "email" : "oleh@example.com",
+                "phone" : "123"
+            },
+            {
+                "name" : "vova",
+                "username" : "pannuish",
+                "pass" : "admin123",
+                "email" : "vova@example.com",
+                "phone" : "345"
+            },
+            {
+                "name" : "roman",
+                "username" : "levkovych",
+                "pass" : "admin123",
+                "email" : "roman@example.com",
+                "phone" : "12"
+            },
+            {
+                "name" : "nikita",
+                "username" : "zhavoronkov",
+                "pass" : "admin123",
+                "email" : "nikita@example.com",
+                "phone" : "1331"
+            }
+            ]
+}
