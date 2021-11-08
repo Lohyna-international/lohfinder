@@ -1,6 +1,9 @@
 use cloud_pubsub::*;
 use std::sync::Arc;
 use std::env;
+mod model{
+    pub mod event;
+}
 
 #[derive(Debug)]
 struct UpdatePacket(String);

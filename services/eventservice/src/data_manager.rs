@@ -1,1 +1,1 @@
-use Model/events
+mod model;

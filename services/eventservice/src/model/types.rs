@@ -3,7 +3,7 @@ use chrono::prelude::*
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Event
+pub struct Event
 {
     pub id : u64,
     title : String,
@@ -38,7 +38,7 @@ impl Event {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Category
+pub struct Category
 {
     name : String
 }
