@@ -50,7 +50,6 @@ class DatabaseAdmin:
     def drop_users(self):
         for user_id in self.get_user_ids():
             self.__users_ref.child(user_id).delete()
-    
 
 databaseURL = "https://lohyna-user-service-default-rtdb.firebaseio.com"
 credentials_path = "firebase.json"

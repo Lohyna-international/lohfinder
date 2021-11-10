@@ -1,8 +1,7 @@
 import os
 from google.cloud import pubsub_v1
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getcwd() + "/lohyna-user-service-584c234c30e6.json"
-
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getcwd() + "/firebase.json"
 timeout = 2.0 #secs
 
 subscriber = pubsub_v1.SubscriberClient()
