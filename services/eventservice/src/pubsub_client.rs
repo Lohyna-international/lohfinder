@@ -1,6 +1,7 @@
 use cloud_pubsub::*;
 use std::sync::Arc;
 use std::env;
+use super::types::{Event, Category};
 
 #[derive(Debug)]
 struct UpdatePacket(String);
@@ -15,7 +16,7 @@ impl FromPubSubMessage for UpdatePacket {
 }
 
 #[tokio::main]
-async fn main() {
+async fn test() {
     let PUBSUB_HOST: String = env::var("PUBSUB_EMULATOR_HOST")
         .map(|host| format!("http://{}", host))
         .unwrap_or_else(|_| String::from("https://pubsub.googleapis.com"));
