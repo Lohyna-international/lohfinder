@@ -143,7 +143,7 @@ fn ids_to_vec_test() {
 
 #[test]
 fn create_event_test() {
-    let manager = data_manager::EventManager::new(&"./db".to_string());
+    let manager = data_manager::EventManager::new(&"./test/createeventtestdb".to_string());
     let event1 = types::Event {
         id: 1,
         title: "Event1".to_string(),
@@ -172,7 +172,7 @@ fn create_event_test() {
 
 #[test]
 fn delete_event_test() {
-    let manager = data_manager::EventManager::new(&"./db".to_string());
+    let manager = data_manager::EventManager::new(&"./test/deleventtestdb".to_string());
     let event1 = types::Event {
         id: 1,
         title: "Event1".to_string(),
@@ -237,7 +237,7 @@ fn delete_event_test() {
 
 #[test]
 fn update_event_test() {
-    let manager = data_manager::EventManager::new(&"./db".to_string());
+    let manager = data_manager::EventManager::new(&"./test/updeventtestdb".to_string());
     let event1 = types::Event {
         id: 1,
         title: "Event1".to_string(),
@@ -280,7 +280,7 @@ fn update_event_test() {
 
 #[test]
 fn get_event_test() {
-    let manager = data_manager::EventManager::new(&"./db".to_string());
+    let manager = data_manager::EventManager::new(&"./test/geteventtestdb".to_string());
     let event1 = types::Event {
         id: 1,
         title: "Event1".to_string(),
@@ -308,7 +308,7 @@ fn get_event_test() {
 
 #[test]
 fn get_events_test() {
-    let manager = data_manager::EventManager::new(&"./db".to_string());
+    let manager = data_manager::EventManager::new(&"./test/geteventstestdb".to_string());
     let cat1 = Category {
         name: "first".to_string(),
     };
@@ -395,7 +395,7 @@ fn get_events_test() {
 
 #[test]
 fn category_get_delete_test() {
-    let manager = data_manager::EventManager::new(&"./db".to_string());
+    let manager = data_manager::EventManager::new(&"./test/cattestdb".to_string());
     let cat1 = Category {
         name: "first".to_string(),
     };
@@ -431,7 +431,7 @@ fn category_get_delete_test() {
 
 #[test]
 fn merge_categories_test() {
-    let manager = data_manager::EventManager::new(&"./db".to_string());
+    let manager = data_manager::EventManager::new(&"./test/mergetestdb".to_string());
     let cat1 = Category {
         name: "first".to_string(),
     };
