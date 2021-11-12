@@ -94,6 +94,13 @@ impl EventManager {
         Ok(true)
     }
 
+    pub fn generate_id(&self) -> Result<u64, Box<dyn std::error::Error>> {
+        match self.db.generate_id() {
+            Ok(id) => Ok(id),
+            Err(e) => Err(Box::new(e))
+        }
+    }
+
     pub fn create_event(&self, new_event: &Event) -> Result<(), Box<dyn std::error::Error>> {
         let id = new_event.id.to_be_bytes().clone();
         let org_id = new_event.organizer.to_be_bytes().clone();
