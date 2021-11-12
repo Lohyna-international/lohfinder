@@ -1,7 +1,7 @@
+use super::types::{Category, Event};
 use cloud_pubsub::*;
-use std::sync::Arc;
 use std::env;
-use super::types::{Event, Category};
+use std::sync::Arc;
 
 #[derive(Debug)]
 struct UpdatePacket(String);
@@ -21,7 +21,9 @@ async fn test() {
         .map(|host| format!("http://{}", host))
         .unwrap_or_else(|_| String::from("https://pubsub.googleapis.com"));
     println!("Will use Host {}", PUBSUB_HOST);
-    let pubsub = Client::new("key.json".to_string()).await.expect("Failed to initialize pubsub");
+    let pubsub = Client::new("key.json".to_string())
+        .await
+        .expect("Failed to initialize pubsub");
     let topic = Arc::new(pubsub.topic("topic-test".to_string()));
     let sub = topic.subscribe().await.expect("Failed to subscribe");
     match topic.clone().publish("🔥").await {

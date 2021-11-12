@@ -1,12 +1,10 @@
 #![feature(array_chunks)]
 mod data_manager;
-mod types;
 mod pubsub_client;
+mod types;
 
 #[tokio::main]
-async fn main() {
-    
-}
+async fn main() {}
 
 #[cfg(test)]
 mod tests;

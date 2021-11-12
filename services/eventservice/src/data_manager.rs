@@ -10,18 +10,18 @@ use tokio::runtime::Handle;
 
 pub struct EventManager {
     db: sled::Db,
-    events_name : String,
-    organizers_name : String,
-    categories_name : String
+    events_name: String,
+    organizers_name: String,
+    categories_name: String,
 }
 
 impl EventManager {
     pub fn new(db_path: &String) -> EventManager {
         let manager = EventManager {
             db: sled::open(db_path).unwrap(),
-            events_name : "events".to_string(),
-            organizers_name : "organizers".to_string(),
-            categories_name : "categories".to_string(),
+            events_name: "events".to_string(),
+            organizers_name: "organizers".to_string(),
+            categories_name: "categories".to_string(),
         };
 
         let events = manager.db.open_tree(&manager.events_name).unwrap();
@@ -33,17 +33,20 @@ impl EventManager {
         manager
     }
 
-    pub fn _merge(key : &[u8], old_v : Option<&[u8]>, new_v : &[u8]) -> Option<Vec<u8>>
-    {
+    pub fn _merge(key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> {
         let mut old_vec = match old_v {
             Some(v) => v.to_vec(),
-            None => Vec::new()
+            None => Vec::new(),
         };
         old_vec.append(&mut new_v.to_vec());
         Some(old_vec)
     }
 
-    pub fn _compare_by_val(key: Option<&String>, a: &Event, b: &Event) -> Option<std::cmp::Ordering> {
+    pub fn _compare_by_val(
+        key: Option<&String>,
+        a: &Event,
+        b: &Event,
+    ) -> Option<std::cmp::Ordering> {
         match key {
             Some(value) => match value.as_str() {
                 "title" => a.title.partial_cmp(&b.title),
@@ -84,11 +87,10 @@ impl EventManager {
             .collect::<Vec<u64>>()
     }
 
-    pub fn _reset_all(self) -> Result<bool, Box<dyn std::error::Error>>
-    {
-        self.db.drop_tree(&self.events_name)?;
-        self.db.drop_tree(&self.organizers_name)?;
-        self.db.drop_tree(&self.categories_name)?;
+    pub fn _reset_all(self) -> Result<bool, Box<dyn std::error::Error>> {
+        self.db.drop_tree(self.events_name)?;
+        self.db.drop_tree(self.organizers_name)?;
+        self.db.drop_tree(self.categories_name)?;
         Ok(true)
     }
 
@@ -108,7 +110,10 @@ impl EventManager {
         if categories.contains_key(&cat)? {
             categories.merge(&cat, id)?;
         } else {
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Unknown category")));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Unknown category",
+            )));
         }
         Ok(())
     }
@@ -116,6 +121,9 @@ impl EventManager {
     pub fn delete_event(&self, event_id: &u64) -> Result<(), Box<dyn std::error::Error>> {
         let id = event_id.to_be_bytes();
         let events = self.db.open_tree(&self.events_name)?;
+        if !events.contains_key(&id)? {
+            return Ok(());
+        }
         let event = Event::from_json(&String::from_utf8(events.get(id)?.unwrap().to_vec())?)?;
         let org_id = event.organizer.to_be_bytes().clone();
         let cat = event.category.name.as_bytes();
@@ -133,7 +141,7 @@ impl EventManager {
             let ids = categories.get(&cat)?.unwrap();
             let new_ids = EventManager::_remove_id(&ids[..], &id);
             if new_ids.is_some() {
-                organizers.compare_and_swap(cat, Some(ids), new_ids)??;
+                categories.compare_and_swap(cat, Some(ids), new_ids)??;
             }
         }
         Ok(())
@@ -142,18 +150,21 @@ impl EventManager {
     pub fn update_event(&self, new_event: &Event) -> Result<(), Box<dyn std::error::Error>> {
         let id = new_event.id.to_be_bytes().clone();
         let events = self.db.open_tree(&self.events_name)?;
-        events.compare_and_swap(
-            id,
-            None as Option<&[u8]>,
-            Some(new_event.to_json().unwrap().as_bytes()),
-        )??;
+        events.insert(id, new_event.to_json().unwrap().as_bytes())?;
         Ok(())
     }
 
     pub fn get_event(&self, event_id: &u64) -> Result<Event, Box<dyn std::error::Error>> {
         let id = event_id.to_be_bytes();
         let events = self.db.open_tree(&self.events_name)?;
-        Event::from_json(&String::from_utf8(events.get(id)?.unwrap().to_vec())?)
+        let event = events.get(id)?;
+        if event.is_none() {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Event not found",
+            )));
+        }
+        Event::from_json(&String::from_utf8(event.unwrap().to_vec())?)
     }
 
     pub fn get_events(
@@ -225,8 +236,7 @@ impl EventManager {
         Ok(return_events)
     }
 
-    pub fn create_category(&self, cat : &Category) -> Result<(), Box<dyn std::error::Error>>
-    {
+    pub fn create_category(&self, cat: &Category) -> Result<(), Box<dyn std::error::Error>> {
         let categories = self.db.open_tree(&self.categories_name)?;
         if !categories.contains_key(&cat.name.as_bytes())? {
             categories.insert(&cat.name.as_bytes(), b"")?;
@@ -234,29 +244,47 @@ impl EventManager {
         Ok(())
     }
 
-    pub fn delete_category(&self, cat : &Category) -> Result<(), Box<dyn std::error::Error>>
-    {
+    pub fn get_categories(&self) -> Result<Vec<Category>, Box<dyn std::error::Error>> {
+        let categories = self.db.open_tree(&self.categories_name)?;
+        Ok(categories
+            .iter()
+            .map(|f| Category::new(String::from_utf8(f.unwrap().0.to_vec()).unwrap()))
+            .collect())
+    }
+
+    pub fn delete_category(&self, cat: &Category) -> Result<(), Box<dyn std::error::Error>> {
         let categories = self.db.open_tree(&self.categories_name)?;
         if categories.contains_key(&cat.name.as_bytes())? {
             categories.remove(&cat.name.as_bytes())?;
+        } else {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Category not found",
+            )));
         }
         Ok(())
     }
 
-    pub fn merge_categories(&self, cat1 : &Category, cat2 : &Category) -> Result<(), Box<dyn std::error::Error>>
-    {
+    pub fn merge_categories(
+        &self,
+        cat1: &Category,
+        cat2: &Category,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let categories = self.db.open_tree(&self.categories_name)?;
         let id1 = cat1.name.as_bytes();
         let id2 = cat2.name.as_bytes();
-        let mut to_add : Vec<u8> = Vec::new();
-        if categories.contains_key(id2)?
-        {
-            match categories.get(id2)?
-            {
+        let mut to_add: Vec<u8> = Vec::new();
+        if categories.contains_key(id2)? {
+            match categories.get(id2)? {
                 Some(values) => {
                     to_add.append(&mut values.to_vec());
-                },
-                None => eprint!("No category {} found!", &cat2.name)
+                }
+                None => {
+                    return Err(Box::new(std::io::Error::new(
+                        std::io::ErrorKind::NotFound,
+                        "Category not found",
+                    )))
+                }
             }
         }
         if categories.contains_key(id1)? {
