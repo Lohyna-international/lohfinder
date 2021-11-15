@@ -25,4 +25,3 @@ with subscriber:
     except:
         user_pull.cancel()
         user_pull.result()
-    

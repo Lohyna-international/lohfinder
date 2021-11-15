@@ -1,2 +1,4 @@
 firebase_admin==5.0.3
 google-cloud-pubsub
+pytest
+faker
