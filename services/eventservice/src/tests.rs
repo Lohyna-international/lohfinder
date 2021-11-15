@@ -1,6 +1,49 @@
-use crate::types::Category;
+use crate::types::{Category, Event};
 
 use super::*;
+
+fn test_categories() -> (Category, Category, Category, Category) {
+    let cat1 = "first".to_string();
+    let cat2 = "second".to_string();
+    let cat3 = "third".to_string();
+    let cat4 = "fourth".to_string();
+    (cat1, cat2, cat3, cat4)
+}
+
+fn test_events(cat1 : Option<Category>, cat2 : Option<Category>,cat3 : Option<Category>) -> (Event,Event,Event) {
+    let (tcat1, tcat2, tcat3, _) = test_categories();
+    let event1 = types::Event {
+        id: 1,
+        title: "Event1".to_string(),
+        cover: "N/A".to_string(),
+        description: "Empty".to_string(),
+        organizer: 3,
+        date_created: chrono::Utc::now().timestamp(),
+        date_planning: (chrono::Utc::now() + chrono::Duration::days(3)).timestamp(),
+        category: cat1.unwrap_or(tcat1)
+    };
+    let event2 = types::Event {
+        id: 2,
+        title: "Event2".to_string(),
+        cover: "N/A".to_string(),
+        description: "Empty".to_string(),
+        organizer: 1,
+        date_created: chrono::Utc::now().timestamp() + 5,
+        date_planning: (chrono::Utc::now() + chrono::Duration::days(2)).timestamp(),
+        category: cat2.unwrap_or(tcat2)
+    };
+    let event3 = types::Event {
+        id: 3,
+        title: "Event3".to_string(),
+        cover: "N/A".to_string(),
+        description: "Empty".to_string(),
+        organizer: 2,
+        date_created: chrono::Utc::now().timestamp() + 10,
+        date_planning: (chrono::Utc::now() + chrono::Duration::days(1)).timestamp(),
+        category: cat3.unwrap_or(tcat3)
+    };
+    (event1, event2, event3)
+}
 
 #[test]
 fn merge_test() {
@@ -12,44 +55,20 @@ fn merge_test() {
 
 #[test]
 fn compare_by_val_test() {
-    let event1 = types::Event {
-        id: 1,
-        title: "Event1".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 3,
-        date_created: chrono::Utc::now().timestamp(),
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(2)).timestamp(),
-        category: Category {
-            name: "N/A".to_string(),
-        },
-    };
-    let event3 = types::Event {
-        id: 3,
-        title: "Event3".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 2,
-        date_created: chrono::Utc::now().timestamp() + 10,
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(1)).timestamp(),
-        category: Category {
-            name: "N/A".to_string(),
-        },
-    };
-
+    let (event1, event2, _) = test_events(None, None, None);
     assert_eq!(
-        data_manager::EventManager::_compare_by_val(None, &event1, &event3),
+        data_manager::EventManager::_compare_by_val(None, &event1, &event2),
         Some(std::cmp::Ordering::Greater)
     );
     assert_eq!(
-        data_manager::EventManager::_compare_by_val(Some(&"title".to_string()), &event1, &event3),
+        data_manager::EventManager::_compare_by_val(Some(&"title".to_string()), &event1, &event2),
         Some(std::cmp::Ordering::Less)
     );
     assert_eq!(
         data_manager::EventManager::_compare_by_val(
             Some(&"organizer".to_string()),
             &event1,
-            &event3
+            &event2
         ),
         Some(std::cmp::Ordering::Greater)
     );
@@ -57,7 +76,7 @@ fn compare_by_val_test() {
         data_manager::EventManager::_compare_by_val(
             Some(&"date_created".to_string()),
             &event1,
-            &event3
+            &event2
         ),
         Some(std::cmp::Ordering::Less)
     );
@@ -65,7 +84,7 @@ fn compare_by_val_test() {
         data_manager::EventManager::_compare_by_val(
             Some(&"date_planning".to_string()),
             &event1,
-            &event3
+            &event2
         ),
         Some(std::cmp::Ordering::Greater)
     );
@@ -73,7 +92,7 @@ fn compare_by_val_test() {
         data_manager::EventManager::_compare_by_val(
             Some(&"non_exisint".to_string()),
             &event1,
-            &event3
+            &event2
         ),
         Some(std::cmp::Ordering::Greater)
     );
@@ -96,36 +115,13 @@ fn remove_id_test() {
 
 #[test]
 fn events_to_vec_test() {
-    let event1 = types::Event {
-        id: 1,
-        title: "Event1".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 3,
-        date_created: chrono::Utc::now().timestamp(),
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(2)).timestamp(),
-        category: Category {
-            name: "N/A".to_string(),
-        },
-    };
-    let event3 = types::Event {
-        id: 3,
-        title: "Event3".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 2,
-        date_created: chrono::Utc::now().timestamp() + 10,
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(1)).timestamp(),
-        category: Category {
-            name: "N/A".to_string(),
-        },
-    };
+    let (event1, event2, _) = test_events(None, None, None);
     assert_eq!(
         data_manager::EventManager::_events_to_vec(&vec![
             event1.to_json().unwrap().as_bytes(),
-            event3.to_json().unwrap().as_bytes()
+            event2.to_json().unwrap().as_bytes()
         ]),
-        vec![event1, event3]
+        vec![event1, event2]
     );
 }
 
@@ -144,23 +140,11 @@ fn ids_to_vec_test() {
 #[test]
 fn create_event_test() {
     let manager = data_manager::EventManager::new(&"./test/createeventtestdb".to_string());
-    let event1 = types::Event {
-        id: 1,
-        title: "Event1".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 3,
-        date_created: chrono::Utc::now().timestamp(),
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(2)).timestamp(),
-        category: Category {
-            name: "N/A".to_string(),
-        },
-    };
+    let (cat1, _, _, _) = test_categories();
+    let (event1, _, _) = test_events(Some(cat1.clone()), None, None);
     assert!(manager.create_event(&event1).is_err());
     manager
-        .create_category(&Category {
-            name: "N/A".to_string(),
-        })
+        .create_category(&cat1)
         .expect("Failed to create category!");
     manager
         .create_event(&event1)
@@ -173,64 +157,28 @@ fn create_event_test() {
 #[test]
 fn delete_event_test() {
     let manager = data_manager::EventManager::new(&"./test/deleventtestdb".to_string());
-    let event1 = types::Event {
-        id: 1,
-        title: "Event1".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 3,
-        date_created: chrono::Utc::now().timestamp(),
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(2)).timestamp(),
-        category: Category {
-            name: "N/A".to_string(),
-        },
-    };
-    let event2 = types::Event {
-        id: 2,
-        title: "Event2".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 1,
-        date_created: chrono::Utc::now().timestamp(),
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(2)).timestamp(),
-        category: Category {
-            name: "ABC".to_string(),
-        },
-    };
-    let event3 = types::Event {
-        id: 3,
-        title: "Event3".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 2,
-        date_created: chrono::Utc::now().timestamp() + 10,
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(1)).timestamp(),
-        category: Category {
-            name: "N/A".to_string(),
-        },
-    };
+    let (cat1, _, _, _) = test_categories();
+    let (event1, event2, _) = test_events(Some(cat1.clone()), Some(cat1.clone()), None);
     manager
-        .create_category(&Category {
-            name: "N/A".to_string(),
-        })
+        .create_category(&cat1)
         .expect("Failed to create category!");
     manager
         .create_event(&event1)
         .expect("Failed to create event");
     manager
-        .create_event(&event3)
+        .create_event(&event2)
         .expect("Failed to create event");
     let events = manager
         .get_events(Some(&"title".to_string()), None, None)
         .expect("Failed to get events");
-    assert_eq!(events, vec![event1.clone(), event3.clone()]);
+    assert_eq!(events, vec![event1.clone(), event2.clone()]);
     manager
         .delete_event(&event1.id)
         .expect("Failed to delete event");
     let events = manager
         .get_events(Some(&"title".to_string()), None, None)
         .expect("Failed to get events");
-    assert_eq!(events, vec![event3]);
+    assert_eq!(events, vec![event2.clone()]);
     assert!(manager.delete_event(&event2.id).is_ok());
     manager._reset_all().expect("Failed to delete db");
 }
@@ -238,65 +186,39 @@ fn delete_event_test() {
 #[test]
 fn update_event_test() {
     let manager = data_manager::EventManager::new(&"./test/updeventtestdb".to_string());
-    let event1 = types::Event {
+    let (cat1, _, _, _) = test_categories();
+    let (event1, _, _) = test_events(Some(cat1.clone()), None, None);
+    let event2 = types::Event {
         id: 1,
-        title: "Event1".to_string(),
+        title: "Event2".to_string(),
         cover: "N/A".to_string(),
         description: "Empty".to_string(),
-        organizer: 3,
-        date_created: chrono::Utc::now().timestamp(),
+        organizer: 1,
+        date_created: chrono::Utc::now().timestamp() + 5,
         date_planning: (chrono::Utc::now() + chrono::Duration::days(2)).timestamp(),
-        category: Category {
-            name: "N/A".to_string(),
-        },
-    };
-    let event3 = types::Event {
-        id: 1,
-        title: "Event3".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 2,
-        date_created: chrono::Utc::now().timestamp() + 10,
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(1)).timestamp(),
-        category: Category {
-            name: "N/A".to_string(),
-        },
+        category: cat1.clone()
     };
     manager
-        .create_category(&Category {
-            name: "N/A".to_string(),
-        })
+        .create_category(&cat1)
         .expect("Failed to create category!");
     manager
         .create_event(&event1)
         .expect("Failed to create event");
     assert_eq!(manager.get_event(&1).unwrap(), event1);
     manager
-        .update_event(&event3)
+        .update_event(&event2)
         .expect("Failed to update event");
-    assert_eq!(manager.get_event(&1).unwrap(), event3);
+    assert_eq!(manager.get_event(&1).unwrap(), event2);
     manager._reset_all().expect("Failed to delete db");
 }
 
 #[test]
 fn get_event_test() {
     let manager = data_manager::EventManager::new(&"./test/geteventtestdb".to_string());
-    let event1 = types::Event {
-        id: 1,
-        title: "Event1".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 3,
-        date_created: chrono::Utc::now().timestamp(),
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(2)).timestamp(),
-        category: Category {
-            name: "N/A".to_string(),
-        },
-    };
+    let (cat1, _, _, _) = test_categories();
+    let (event1, _, _) = test_events(Some(cat1.clone()), None, None);
     manager
-        .create_category(&Category {
-            name: "N/A".to_string(),
-        })
+        .create_category(&cat1)
         .expect("Failed to create category!");
     assert!(manager.get_event(&1).is_err());
     manager
@@ -309,42 +231,8 @@ fn get_event_test() {
 #[test]
 fn get_events_test() {
     let manager = data_manager::EventManager::new(&"./test/geteventstestdb".to_string());
-    let cat1 = Category {
-        name: "first".to_string(),
-    };
-    let cat2 = Category {
-        name: "second".to_string(),
-    };
-    let event1 = types::Event {
-        id: 1,
-        title: "Event1".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 1,
-        date_created: chrono::Utc::now().timestamp(),
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(3)).timestamp(),
-        category: cat1.clone(),
-    };
-    let event2 = types::Event {
-        id: 2,
-        title: "Event2".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 1,
-        date_created: chrono::Utc::now().timestamp(),
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(2)).timestamp(),
-        category: cat2.clone(),
-    };
-    let event3 = types::Event {
-        id: 3,
-        title: "Event3".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 2,
-        date_created: chrono::Utc::now().timestamp() + 10,
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(1)).timestamp(),
-        category: cat1.clone(),
-    };
+    let (cat1, cat2, _, _) = test_categories();
+    let (event1, event2, event3) = test_events(Some(cat1.clone()), Some(cat2.clone()), Some(cat1.clone()));
     manager
         .create_category(&cat1)
         .expect("Failed to create category!");
@@ -376,19 +264,19 @@ fn get_events_test() {
         manager
             .get_events(Some(&"title".to_string()), Some(1), None)
             .unwrap(),
-        vec![event1.clone(), event2.clone()]
+        vec![event2.clone()]
     );
     assert_eq!(
         manager
-            .get_events(Some(&"title".to_string()), None, Some(&cat2.name))
+            .get_events(Some(&"title".to_string()), None, Some(&cat2))
             .unwrap(),
         vec![event2.clone()]
     );
     assert_eq!(
         manager
-            .get_events(Some(&"title".to_string()), Some(1), Some(&cat1.name))
+            .get_events(Some(&"title".to_string()), Some(2), Some(&cat1))
             .unwrap(),
-        vec![event1.clone()]
+        vec![event3.clone()]
     );
     manager._reset_all().expect("Failed to delete db");
 }
@@ -396,18 +284,7 @@ fn get_events_test() {
 #[test]
 fn category_get_delete_test() {
     let manager = data_manager::EventManager::new(&"./test/cattestdb".to_string());
-    let cat1 = Category {
-        name: "first".to_string(),
-    };
-    let cat2 = Category {
-        name: "second".to_string(),
-    };
-    let cat3 = Category {
-        name: "third".to_string(),
-    };
-    let cat4 = Category {
-        name: "fourth".to_string(),
-    };
+    let (cat1, cat2, cat3, cat4 ) = test_categories();
     manager
         .create_category(&cat1)
         .expect("Failed to create category");
@@ -432,42 +309,8 @@ fn category_get_delete_test() {
 #[test]
 fn merge_categories_test() {
     let manager = data_manager::EventManager::new(&"./test/mergetestdb".to_string());
-    let cat1 = Category {
-        name: "first".to_string(),
-    };
-    let cat2 = Category {
-        name: "second".to_string(),
-    };
-    let event1 = types::Event {
-        id: 1,
-        title: "Event1".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 1,
-        date_created: chrono::Utc::now().timestamp(),
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(3)).timestamp(),
-        category: cat1.clone(),
-    };
-    let event2 = types::Event {
-        id: 2,
-        title: "Event2".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 1,
-        date_created: chrono::Utc::now().timestamp(),
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(2)).timestamp(),
-        category: cat2.clone(),
-    };
-    let event3 = types::Event {
-        id: 3,
-        title: "Event3".to_string(),
-        cover: "N/A".to_string(),
-        description: "Empty".to_string(),
-        organizer: 2,
-        date_created: chrono::Utc::now().timestamp() + 10,
-        date_planning: (chrono::Utc::now() + chrono::Duration::days(1)).timestamp(),
-        category: cat1.clone(),
-    };
+    let (cat1, cat2, _, _) = test_categories();
+    let (event1, event2, event3) = test_events(Some(cat1.clone()), Some(cat2.clone()), Some(cat1.clone()));
     manager
         .create_category(&cat1)
         .expect("Failed to create category!");
@@ -485,13 +328,13 @@ fn merge_categories_test() {
         .expect("Failed to create event");
     assert_eq!(
         manager
-            .get_events(Some(&"title".to_string()), None, Some(&cat2.name))
+            .get_events(Some(&"title".to_string()), None, Some(&cat2))
             .unwrap(),
         vec![event2.clone()]
     );
     assert_eq!(
         manager
-            .get_events(Some(&"title".to_string()), None, Some(&cat1.name))
+            .get_events(Some(&"title".to_string()), None, Some(&cat1))
             .unwrap(),
         vec![event1.clone(), event3.clone()]
     );
@@ -500,7 +343,7 @@ fn merge_categories_test() {
         .expect("Failed to merge");
     assert_eq!(
         manager
-            .get_events(Some(&"title".to_string()), None, Some(&cat1.name))
+            .get_events(Some(&"title".to_string()), None, Some(&cat1))
             .unwrap(),
         vec![event1, event2, event3]
     );

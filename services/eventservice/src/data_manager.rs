@@ -104,7 +104,7 @@ impl EventManager {
     pub fn create_event(&self, new_event: &Event) -> Result<(), Box<dyn std::error::Error>> {
         let id = new_event.id.to_be_bytes().clone();
         let org_id = new_event.organizer.to_be_bytes().clone();
-        let cat = new_event.category.name.as_bytes();
+        let cat = new_event.category.as_bytes();
         let events = self.db.open_tree(&self.events_name)?;
         events.insert(id.clone(), new_event.to_json().unwrap().as_bytes())?;
         let organizers = self.db.open_tree(&self.organizers_name)?;
@@ -133,7 +133,7 @@ impl EventManager {
         }
         let event = Event::from_json(&String::from_utf8(events.get(id)?.unwrap().to_vec())?)?;
         let org_id = event.organizer.to_be_bytes().clone();
-        let cat = event.category.name.as_bytes();
+        let cat = event.category.as_bytes();
         events.remove(id)?;
         let organizers = self.db.open_tree(&self.organizers_name)?;
         let categories = self.db.open_tree(&self.categories_name)?;
@@ -245,8 +245,8 @@ impl EventManager {
 
     pub fn create_category(&self, cat: &Category) -> Result<(), Box<dyn std::error::Error>> {
         let categories = self.db.open_tree(&self.categories_name)?;
-        if !categories.contains_key(&cat.name.as_bytes())? {
-            categories.insert(&cat.name.as_bytes(), b"")?;
+        if !categories.contains_key(&cat.as_bytes())? {
+            categories.insert(&cat.as_bytes(), b"")?;
         }
         Ok(())
     }
@@ -255,14 +255,14 @@ impl EventManager {
         let categories = self.db.open_tree(&self.categories_name)?;
         Ok(categories
             .iter()
-            .map(|f| Category::new(String::from_utf8(f.unwrap().0.to_vec()).unwrap()))
+            .map(|f| String::from_utf8(f.unwrap().0.to_vec()).unwrap())
             .collect())
     }
 
     pub fn delete_category(&self, cat: &Category) -> Result<(), Box<dyn std::error::Error>> {
         let categories = self.db.open_tree(&self.categories_name)?;
-        if categories.contains_key(&cat.name.as_bytes())? {
-            categories.remove(&cat.name.as_bytes())?;
+        if categories.contains_key(&cat.as_bytes())? {
+            categories.remove(&cat.as_bytes())?;
         } else {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
@@ -278,8 +278,8 @@ impl EventManager {
         cat2: &Category,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let categories = self.db.open_tree(&self.categories_name)?;
-        let id1 = cat1.name.as_bytes();
-        let id2 = cat2.name.as_bytes();
+        let id1 = cat1.as_bytes();
+        let id2 = cat2.as_bytes();
         let mut to_add: Vec<u8> = Vec::new();
         if categories.contains_key(id2)? {
             match categories.get(id2)? {
