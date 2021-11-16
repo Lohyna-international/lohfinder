@@ -1,19 +1,39 @@
+use crate::pstypes;
+
 use super::types::{Category, Event};
+use super::pstypes::*;
 use cloud_pubsub::*;
 use std::env;
 use std::sync::Arc;
+use std::collections::HashMap;
 
-#[derive(Debug)]
-struct UpdatePacket(String);
+struct PubSubClient {
+    topics : HashMap<String, Arc<Topic>>,
+    subs : HashMap<String, Subscription>,
+}
 
-impl FromPubSubMessage for UpdatePacket {
-    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
-        match message.decode() {
-            Ok(bytes) => Ok(UpdatePacket(String::from_utf8_lossy(&bytes).into_owned())),
-            Err(e) => Err(error::Error::from(e)),
+impl PubSubClient {
+    pub async fn new(keys : String) -> Result<PubSubClient, Box<dyn std::error::Error>> {
+        let client = Client::new(keys).await?;
+        let topics_names = vec!["event_create", "event_delete", "event_update", "event_get", "events", "categories","category_create","category_delete", "category_merge"];
+        let mut topics = HashMap::new();
+        let mut subs = HashMap::new();
+        topics_names.iter().map(|f| f.to_string()).for_each(|f| {
+            let topic = Arc::new(client.topic(f.clone()));
+            topics.insert(f, topic);
+        });
+        for (name, topic) in &topics {
+            let sub = topic.subscribe().await.expect("Failed to subscribe");
+            subs.insert(name.clone(), sub);
         }
+        Ok(PubSubClient {topics : topics, subs : subs})
+    }
+
+    fn parse_message<T, U>(message : T) -> Option<U> where T : FromPubSubMessage, U : PubSubCallBack {
+        
     }
 }
+
 
 #[tokio::main]
 async fn test() {
@@ -26,7 +46,7 @@ async fn test() {
         .expect("Failed to initialize pubsub");
     let topic = Arc::new(pubsub.topic("topic-test".to_string()));
     let sub = topic.subscribe().await.expect("Failed to subscribe");
-    match topic.clone().publish("🔥").await {
+    match topic.publish("🔥").await {
         Ok(response) => {
             println!("{:?}", response);
         }
