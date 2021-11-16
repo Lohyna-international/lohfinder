@@ -139,7 +139,7 @@ fn ids_to_vec_test() {
 
 #[test]
 fn create_event_test() {
-    let manager = data_manager::EventManager::new(&"./test/createeventtestdb".to_string());
+    let manager = data_manager::EventManager::new(&"./test/createeventtestdb".to_string()).expect("Failed to create db");
     let (cat1, _, _, _) = test_categories();
     let (event1, _, _) = test_events(Some(cat1.clone()), None, None);
     assert!(manager.create_event(&event1).is_err());
@@ -156,7 +156,7 @@ fn create_event_test() {
 
 #[test]
 fn delete_event_test() {
-    let manager = data_manager::EventManager::new(&"./test/deleventtestdb".to_string());
+    let manager = data_manager::EventManager::new(&"./test/deleventtestdb".to_string()).expect("Failed to create db");
     let (cat1, _, _, _) = test_categories();
     let (event1, event2, _) = test_events(Some(cat1.clone()), Some(cat1.clone()), None);
     manager
@@ -185,7 +185,7 @@ fn delete_event_test() {
 
 #[test]
 fn update_event_test() {
-    let manager = data_manager::EventManager::new(&"./test/updeventtestdb".to_string());
+    let manager = data_manager::EventManager::new(&"./test/updeventtestdb".to_string()).expect("Failed to create db");
     let (cat1, _, _, _) = test_categories();
     let (event1, _, _) = test_events(Some(cat1.clone()), None, None);
     let event2 = types::Event {
@@ -214,7 +214,7 @@ fn update_event_test() {
 
 #[test]
 fn get_event_test() {
-    let manager = data_manager::EventManager::new(&"./test/geteventtestdb".to_string());
+    let manager = data_manager::EventManager::new(&"./test/geteventtestdb".to_string()).expect("Failed to create db");
     let (cat1, _, _, _) = test_categories();
     let (event1, _, _) = test_events(Some(cat1.clone()), None, None);
     manager
@@ -230,7 +230,7 @@ fn get_event_test() {
 
 #[test]
 fn get_events_test() {
-    let manager = data_manager::EventManager::new(&"./test/geteventstestdb".to_string());
+    let manager = data_manager::EventManager::new(&"./test/geteventstestdb".to_string()).expect("Failed to create db");
     let (cat1, cat2, _, _) = test_categories();
     let (event1, event2, event3) = test_events(Some(cat1.clone()), Some(cat2.clone()), Some(cat1.clone()));
     manager
@@ -283,7 +283,7 @@ fn get_events_test() {
 
 #[test]
 fn category_get_delete_test() {
-    let manager = data_manager::EventManager::new(&"./test/cattestdb".to_string());
+    let manager = data_manager::EventManager::new(&"./test/cattestdb".to_string()).expect("Failed to create db");
     let (cat1, cat2, cat3, cat4 ) = test_categories();
     manager
         .create_category(&cat1)
@@ -308,7 +308,7 @@ fn category_get_delete_test() {
 
 #[test]
 fn merge_categories_test() {
-    let manager = data_manager::EventManager::new(&"./test/mergetestdb".to_string());
+    let manager = data_manager::EventManager::new(&"./test/mergetestdb".to_string()).expect("Failed to create db");
     let (cat1, cat2, _, _) = test_categories();
     let (event1, event2, event3) = test_events(Some(cat1.clone()), Some(cat2.clone()), Some(cat1.clone()));
     manager

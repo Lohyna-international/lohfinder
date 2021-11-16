@@ -16,21 +16,21 @@ pub struct EventManager {
 }
 
 impl EventManager {
-    pub fn new(db_path: &String) -> EventManager {
+    pub fn new(db_path: &String) -> Result<EventManager, Box<dyn std::error::Error>> {
         let manager = EventManager {
-            db: sled::open(db_path).unwrap(),
+            db: sled::open(db_path)?,
             events_name: "events".to_string(),
             organizers_name: "organizers".to_string(),
             categories_name: "categories".to_string(),
         };
 
-        let events = manager.db.open_tree(&manager.events_name).unwrap();
-        let orgs = manager.db.open_tree(&manager.organizers_name).unwrap();
-        let cats = manager.db.open_tree(&manager.categories_name).unwrap();
+        let events = manager.db.open_tree(&manager.events_name)?;
+        let orgs = manager.db.open_tree(&manager.organizers_name)?;
+        let cats = manager.db.open_tree(&manager.categories_name)?;
         events.set_merge_operator(EventManager::_merge);
         orgs.set_merge_operator(EventManager::_merge);
         cats.set_merge_operator(EventManager::_merge);
-        manager
+        Ok(manager)
     }
 
     pub fn _merge(key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> {
@@ -106,7 +106,7 @@ impl EventManager {
         let org_id = new_event.organizer.to_be_bytes().clone();
         let cat = new_event.category.as_bytes();
         let events = self.db.open_tree(&self.events_name)?;
-        events.insert(id.clone(), new_event.to_json().unwrap().as_bytes())?;
+        events.insert(id.clone(), new_event.to_json()?.as_bytes())?;
         let organizers = self.db.open_tree(&self.organizers_name)?;
         let categories = self.db.open_tree(&self.categories_name)?;
         if organizers.contains_key(&org_id)? {
@@ -226,11 +226,11 @@ impl EventManager {
                     ids.append(&mut EventManager::_ids_to_vec(&cat_ids.unwrap()));
                 }
             }
-            let events_raw = ids.into_iter().map(|v| events.get(v.to_be_bytes()));
+            let events_raw = ids.into_iter().filter_map(|v| events.get(v.to_be_bytes()).ok());
             events_raw.for_each(|v| {
-                if v.is_ok() {
+                if v.is_some() {
                     let parsed =
-                        Event::from_json(&String::from_utf8(v.unwrap().unwrap().to_vec()).unwrap());
+                        Event::from_json(&String::from_utf8(v.unwrap().to_vec()).unwrap());
                     if parsed.is_ok() {
                         return_events.push(parsed.unwrap());
                     }
@@ -255,7 +255,8 @@ impl EventManager {
         let categories = self.db.open_tree(&self.categories_name)?;
         Ok(categories
             .iter()
-            .map(|f| String::from_utf8(f.unwrap().0.to_vec()).unwrap())
+            .filter_map(|f| f.ok())
+            .filter_map(|f| String::from_utf8(f.0.to_vec()).ok())
             .collect())
     }
 
