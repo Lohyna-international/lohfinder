@@ -1,5 +1,5 @@
-import json
 import firebase_admin
+from firebase_admin.exceptions import FirebaseError
 from firebase_admin import credentials
 from firebase_admin import db
 
@@ -15,47 +15,96 @@ class DatabaseAdmin:
         self.__users_ref = db.reference("users")
 
     def get_all_users(self):
-        if self.__users_ref.get() is None:
+        try:
+            if self.__users_ref.get() is None:
+                return list()
+            return self.__users_ref.get()
+        except FirebaseError as e:
+            print("###Connection lost. EROR received : " + str(e))
             return list()
-        return self.__users_ref.get()
     
 
     def get_user_by_id(self, id):
-        if self.__users_ref.child(id).get() is None:
-            return list()
-        return self.__users_ref.child(id).get()
+        try:
+            if self.__users_ref.child(id).get() is None:
+                return list()
+            return self.__users_ref.child(id).get()
+        except ValueError as e:
+            print("###EROR received : " + str(e))
+        except FirebaseError as e:
+            print("###Connection lost. EROR received : " + str(e))
+        return list()
 
 
     def get_user_by_email(self, email):
-        for user_id in self.get_user_ids():
-            if email == self.__users_ref.child(user_id).child("email").get():
-                return self.__users_ref.child(user_id).get()
-    
+        try:   
+            for user_id in self.get_user_ids():
+                if email == self.__users_ref.child(user_id).child("email").get():          
+                    return self.__users_ref.child(user_id).get()
+        except ValueError as e:
+            print("###EROR received : " + str(e))
+        except FirebaseError as e:
+            print("###Connection lost. EROR received : " + str(e))
+        return list()
 
     def get_user_ids(self):
-        if self.__users_ref.get() is None:
-            return list()
-        ids = [i for i in self.__users_ref.get()]
-        return ids
+        try:
+            if self.__users_ref.get() is None:
+                return list()
+            ids = [i for i in self.__users_ref.get()]
+            return ids
+        except FirebaseError as e:
+            print("###Connection lost. EROR received : " + str(e))
+        return list()
 
 
     def save_user(self, user_info):
-        return self.__users_ref.push(user_info).key
+        try:
+            return self.__users_ref.push(user_info).key
+        except ValueError as e:
+            print("###EROR received : " + str(e))
+        except TypeError as e:
+            print("###EROR received : " + str(e))
+        except FirebaseError as e:
+            print("###Connection lost. EROR received : " + str(e))
 
     
     def update_user(self, user_id, user_info):
-        self.__users_ref.child(user_id).set(user_info)
-
-    def delete_user_by_id(self, user_id):
-        self.__users_ref.child(user_id).delete()
+        try:
+            self.__users_ref.child(user_id).set(user_info)
+        except ValueError as e:
+            print("###EROR received : " + str(e))
+        except TypeError as e:
+            print("###EROR received : " + str(e))
+        except FirebaseError as e:
+            print("###Connection lost. EROR received : " + str(e))
     
 
+    def delete_user_by_id(self, user_id):
+        try:
+            self.__users_ref.child(user_id).delete()
+        except ValueError as e:
+            print("###EROR received : " + str(e))
+        except FirebaseError as e:
+            print("###Connection lost. EROR received : " + str(e))
+
+
     def delete_user_by_email(self, email):
-        for i in self.get_user_ids():
-            if email == self.__users_ref.child(i).child("email").get():
-                self.delete_user_by_id(i)
+        try:
+            for i in self.get_user_ids():
+                if email == self.__users_ref.child(i).child("email").get():
+                    self.delete_user_by_id(i)
+        except ValueError as e:
+            print("###EROR received : " + str(e))
+        except FirebaseError as e:
+            print("###Connection lost. EROR received : " + str(e))
 
 
     def drop_users(self):
-        for user_id in self.get_user_ids():
-            self.__users_ref.child(user_id).delete()
+        try:
+            for user_id in self.get_user_ids():
+                self.__users_ref.child(user_id).delete()
+        except ValueError as e:
+            print("###EROR received : " + str(e))
+        except FirebaseError as e:
+            print("###Connection lost. EROR received : " + str(e))

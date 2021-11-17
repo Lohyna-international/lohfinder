@@ -27,7 +27,7 @@ def test_delete_user_by_email():
     assert database_manager.get_user_by_email(user_email)["email"] == user_email
     database_manager.delete_user_by_email(user_email)
     print("STEP 2: After deleting by email user is not more stored")
-    assert database_manager.get_user_by_email(user_email) == None
+    assert database_manager.get_user_by_email(user_email) == []
 
 
 def test_delete_user_by_id():
