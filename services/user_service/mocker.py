@@ -10,7 +10,6 @@ images = [
 
 def get_mocked_users(N = 1):
     fake = Faker()
-    Faker.seed(0)
     users = list()
     for i in range(N):
         users.append(
@@ -27,5 +26,3 @@ def get_mocked_users(N = 1):
             }
         )
     return users
-
-print(get_mocked_users(10))

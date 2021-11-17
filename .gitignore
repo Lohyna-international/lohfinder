@@ -1,2 +1,5 @@
 *firebase.json
+*firebase_test.json
 *google_cloud.json
+services/user_service/env/
+services/user_service/__pycache__/
