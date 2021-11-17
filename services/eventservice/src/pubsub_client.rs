@@ -1,6 +1,7 @@
-use crate::data_manager::EventManager;
 use super::pstypes::*;
+use crate::data_manager::EventManager;
 use cloud_pubsub::*;
+use futures;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -74,63 +75,81 @@ impl PubSubClient {
         sub.acknowledge_messages(ids).await
     }
 
-    fn work_messages<T>(
-        &self,
-        messages: Vec<(Result<T, error::Error>, String)>,
-    ) -> (Vec<Status>, Vec<String>)
-    where
-        T: PubSubCallBack,
-    {
-        let mut res = Vec::new();
-        let mut ids = Vec::new();
-        messages.iter().for_each(|(item, id)| {
-            if item.is_ok() {
-                res.push(item.as_ref().unwrap().handle(&self.manager));
-                ids.push(id.clone());
-            }
-            else {
-                println!("Failed to parse message : {:?}", item.as_ref().err().unwrap());
-            }
-        });
-        (res, ids)
-    }
-
     pub async fn handle_messages(&self) -> Result<Vec<Status>, Box<dyn std::error::Error>> {
         let mut all_statuses = Vec::new();
+        let mut futures = Vec::new();
+        let mut ackns = Vec::new();
+        let mut names = Vec::new();
         for (name, sub) in &self.subs {
-            println!("Scanning {}", &name);
-            let (mut statuses, ids) = match name.as_str() {
-                "event_create" => {
-                    self.work_messages(sub.get_messages::<CreateEventMessage>().await?)
-                }
-                "event_delete" => {
-                    self.work_messages(sub.get_messages::<DeleteEventMessage>().await?)
-                }
-                "event_update" => {
-                    self.work_messages(sub.get_messages::<UpdateEventMessage>().await?)
-                }
-                "event_get" => self.work_messages(sub.get_messages::<GetEventMessage>().await?),
-                "events" => self.work_messages(sub.get_messages::<GetEventsMessage>().await?),
-                "categories" => self.work_messages(sub.get_messages::<GetCategoriesMessage>().await?),
-                "category_create" => {
-                    self.work_messages(sub.get_messages::<CreateCategoryMessage>().await?)
-                }
-                "category_delete" => {
-                    self.work_messages(sub.get_messages::<DeleteCategoryMessage>().await?)
-                }
-                "category_merge" => {
-                    self.work_messages(sub.get_messages::<MergeCategoriesMessage>().await?)
-                }
-                _ => {
-                    return Err(Box::new(std::io::Error::new(
-                        std::io::ErrorKind::InvalidData,
-                        "Topic not found",
-                    )))
-                }
-            };
-            all_statuses.append(&mut statuses);
-            self.acknowledge(ids, sub).await;
+            futures.push(sub.get_messages::<Message>());
+            names.push(name.clone());
         }
+        for (i, name) in futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .filter_map(|f| f.ok())
+            .zip(names)
+        {
+            let ids: Vec<String> = i.iter().map(|v| v.1.clone()).collect();
+            ackns.push(self.acknowledge(ids, self.subs.get(&name).unwrap()));
+            let values: Vec<Message> = i.into_iter().filter_map(|v| v.0.ok()).collect();
+            if values.is_empty() {
+                continue;
+            }
+            let mut r = match name.as_str() {
+                "event_create" => Ok(values
+                    .iter()
+                    .filter_map(|v| serde_json::from_str::<CreateEventMessage>(&v.data).ok())
+                    .map(|v| v.handle(&self.manager))
+                    .collect::<Vec<Status>>()),
+                "event_delete" => Ok(values
+                    .iter()
+                    .filter_map(|v| serde_json::from_str::<DeleteEventMessage>(&v.data).ok())
+                    .map(|v| v.handle(&self.manager))
+                    .collect::<Vec<Status>>()),
+                "event_update" => Ok(values
+                    .iter()
+                    .filter_map(|v| serde_json::from_str::<UpdateEventMessage>(&v.data).ok())
+                    .map(|v| v.handle(&self.manager))
+                    .collect::<Vec<Status>>()),
+                "event_get" => Ok(values
+                    .iter()
+                    .filter_map(|v| serde_json::from_str::<GetEventMessage>(&v.data).ok())
+                    .map(|v| v.handle(&self.manager))
+                    .collect::<Vec<Status>>()),
+                "events" => Ok(values
+                    .iter()
+                    .filter_map(|v| serde_json::from_str::<GetEventsMessage>(&v.data).ok())
+                    .map(|v| v.handle(&self.manager))
+                    .collect::<Vec<Status>>()),
+                "categories" => Ok(values
+                    .iter()
+                    .filter_map(|v| serde_json::from_str::<GetCategoriesMessage>(&v.data).ok())
+                    .map(|v| v.handle(&self.manager))
+                    .collect::<Vec<Status>>()),
+                "category_create" => Ok(values
+                    .iter()
+                    .filter_map(|v| serde_json::from_str::<CreateCategoryMessage>(&v.data).ok())
+                    .map(|v| v.handle(&self.manager))
+                    .collect::<Vec<Status>>()),
+                "category_delete" => Ok(values
+                    .iter()
+                    .filter_map(|v| serde_json::from_str::<DeleteCategoryMessage>(&v.data).ok())
+                    .map(|v| v.handle(&self.manager))
+                    .collect::<Vec<Status>>()),
+                "category_merge" => Ok(values
+                    .iter()
+                    .filter_map(|v| serde_json::from_str::<MergeCategoriesMessage>(&v.data).ok())
+                    .map(|v| v.handle(&self.manager))
+                    .collect::<Vec<Status>>()),
+                _ => Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Topic not found",
+                ))),
+            }?;
+            all_statuses.append(&mut r);
+        }
+        futures::future::join_all(ackns).await;
         Ok(all_statuses)
     }
 }

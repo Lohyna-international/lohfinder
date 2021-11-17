@@ -6,11 +6,9 @@ mod data_manager;
 mod pubsub_client;
 mod types;
 mod pstypes;
-use tokio::time::{sleep, Duration};
 
 #[tokio::main]
 async fn main() {
-    let sleep_duration = Duration::from_secs(1);
     let path_to_db = "./test/db";
     let keys = "./key.json";
     let manager = EventManager::new(&path_to_db.to_string()).expect("Failed to create database");
@@ -25,7 +23,6 @@ async fn main() {
             },
             Err(e) => eprintln!("Failed to handle messages : {}", e)
         }
-        sleep(sleep_duration.clone()).await;
     }
 }
 

@@ -2,6 +2,7 @@ use super::*;
 use crate::types::{Category, Event};
 use cloud_pubsub::*;
 use tokio_test;
+use chrono;
 
 fn test_categories() -> (Category, Category, Category, Category) {
     let cat1 = "first".to_string();
@@ -96,8 +97,9 @@ fn create_event_pubsub_test() {
         name : cat1.clone()
     };
     aw!(topic2.publish(serde_json::to_string(&create_cat_message).expect("Failed to serialize message"))).expect("Failed to send message");
+    let time = chrono::Utc::now();
     let res = aw!(work_client.handle_messages()).expect("Failed to handle messages");
-    res.iter().for_each(|f| println!("Status : {:?}", f));
+    println!("{:?}", chrono::Utc::now() - time);
     assert!(res.iter().any(|f| f.id == 1 && f.code == 200));
     aw!(work_client.return_results(res)).expect("Failed to return results");
     let statuses = aw!(sub.get_messages::<pstypes::Status>()).expect("Failed to get statuses");

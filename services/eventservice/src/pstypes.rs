@@ -9,6 +9,29 @@ fn format_string(inp : &str) -> String {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct Message {
+    pub data : String
+}
+
+impl Message {
+    pub fn new(data : String) -> Message{
+        Message {data}
+    }
+}
+
+impl FromPubSubMessage for Message {
+    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
+        match message.decode() {
+            Ok(bytes) => match serde_json::from_str::<String>(&String::from_utf8(bytes).unwrap()) {
+                Ok(m) => Ok(Message::new(m)),
+                Err(e) => Err(error::Error::from(e)),
+            },
+            Err(e) => Err(error::Error::from(e)),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Status {
     pub id: u64,
     pub code: u16,
