@@ -1,4 +1,3 @@
-use chrono;
 use serde::{Deserialize, Serialize};
 
 pub type Category = String;
@@ -16,19 +15,6 @@ pub struct Event {
 }
 
 impl Event {
-    pub fn new() -> Event {
-        Event {
-            id: 1,
-            title: "Unnamed".to_string(),
-            cover: "N/A".to_string(),
-            description: "Empty".to_string(),
-            organizer: 1,
-            date_created: chrono::Utc::now().timestamp(),
-            date_planning: (chrono::Utc::now() + chrono::Duration::days(1)).timestamp(),
-            category: "N/A".to_string()
-        }
-    }
-
     pub fn from_json(serialized: &String) -> Result<Event, Box<dyn std::error::Error>> {
         match serde_json::from_str::<Event>(&serialized) {
             Ok(event) => Ok(event),

@@ -1,12 +1,6 @@
-use crate::main;
-
 use super::types::{Category, Event};
-use chrono;
-use serde::{de::IntoDeserializer, Deserialize, Serialize};
-use serde_json::value;
 use sled;
 use std::collections::HashSet;
-use tokio::runtime::Handle;
 
 pub struct EventManager {
     db: sled::Db,
@@ -33,7 +27,7 @@ impl EventManager {
         Ok(manager)
     }
 
-    pub fn _merge(key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> {
+    pub fn _merge(_key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> {
         let mut old_vec = match old_v {
             Some(v) => v.to_vec(),
             None => Vec::new(),
@@ -87,10 +81,10 @@ impl EventManager {
             .collect::<Vec<u64>>()
     }
 
-    pub fn _reset_all(self) -> Result<bool, Box<dyn std::error::Error>> {
-        self.db.drop_tree(self.events_name)?;
-        self.db.drop_tree(self.organizers_name)?;
-        self.db.drop_tree(self.categories_name)?;
+    pub fn _reset_all(&self) -> Result<bool, Box<dyn std::error::Error>> {
+        self.db.drop_tree(self.events_name.clone())?;
+        self.db.drop_tree(self.organizers_name.clone())?;
+        self.db.drop_tree(self.categories_name.clone())?;
         Ok(true)
     }
 
