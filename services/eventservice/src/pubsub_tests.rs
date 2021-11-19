@@ -1,8 +1,8 @@
 use super::*;
 use crate::types::{Category, Event};
+use chrono;
 use cloud_pubsub::*;
 use tokio_test;
-use chrono;
 
 fn test_categories() -> (Category, Category, Category, Category) {
     let cat1 = "first".to_string();
@@ -66,12 +66,11 @@ async fn init_client() -> (Client, pubsub_client::PubSubClient) {
     )
 }
 
-
 macro_rules! aw {
     ($e:expr) => {
         tokio_test::block_on($e)
     };
-  }
+}
 
 #[test]
 fn create_event_pubsub_test() {
@@ -89,27 +88,42 @@ fn create_event_pubsub_test() {
         description: event1.description.clone(),
         organizer: event1.organizer,
         category: event1.category.clone(),
-        date_created : Some(event1.date_created),
+        date_created: Some(event1.date_created),
         date_planning: event1.date_planning,
     };
     let create_cat_message = pstypes::CreateCategoryMessage {
-        message_id : 1,
-        name : cat1.clone()
+        message_id: 1,
+        name: cat1.clone(),
     };
-    aw!(topic2.publish(serde_json::to_string(&create_cat_message).expect("Failed to serialize message"))).expect("Failed to send message");
+    aw!(topic2
+        .publish(serde_json::to_string(&create_cat_message).expect("Failed to serialize message")))
+    .expect("Failed to send message");
     let time = chrono::Utc::now();
     let res = aw!(work_client.handle_messages()).expect("Failed to handle messages");
-    println!("{:?}", chrono::Utc::now() - time);
-    assert!(res.iter().inspect(|f| println!("{:?}",f)).any(|f| f.id == 1 && f.code == 200));
+    println!("Seconds to pull all messages : {}", (chrono::Utc::now() - time).num_seconds());
+    assert!(res
+        .iter()
+        .inspect(|f| println!("{:?}", f))
+        .any(|f| f.id == 1 && f.code == 200));
     aw!(work_client.return_results(res)).expect("Failed to return results");
     let statuses = aw!(sub.get_messages::<pstypes::Status>()).expect("Failed to get statuses");
-    assert!(statuses.iter().filter_map(|f| f.0.as_ref().ok()).any(|s| s.id == 1 && s.code == 200));
+    assert!(statuses
+        .iter()
+        .filter_map(|f| f.0.as_ref().ok())
+        .any(|s| s.id == 1 && s.code == 200));
 
-    aw!(topic.publish(serde_json::to_string(&message).expect("Failed to serialize message"))).expect("Failed to send message");
+    aw!(topic.publish(serde_json::to_string(&message).expect("Failed to serialize message")))
+        .expect("Failed to send message");
     let res = aw!(work_client.handle_messages()).expect("Failed to handle messages");
-    assert!(res.iter().inspect(|f| println!("{:?}",f)).any(|f| f.id == 0 && f.code == 200));
+    assert!(res
+        .iter()
+        .inspect(|f| println!("{:?}", f))
+        .any(|f| f.id == 0 && f.code == 200));
     aw!(work_client.return_results(res)).expect("Failed to return results");
     let statuses = aw!(sub.get_messages::<pstypes::Status>()).expect("Failed to get statuses");
-    assert!(statuses.iter().filter_map(|f| f.0.as_ref().ok()).any(|s| s.id == 0 && s.code == 200));
+    assert!(statuses
+        .iter()
+        .filter_map(|f| f.0.as_ref().ok())
+        .any(|s| s.id == 0 && s.code == 200));
     work_client.clean_db();
 }

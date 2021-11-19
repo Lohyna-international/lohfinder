@@ -83,50 +83,57 @@ impl PubSubClient {
         messages: Vec<Message>,
         name: &String,
     ) -> Result<Vec<Box<dyn PubSubCallBack>>, std::io::Error> {
-        let mut res: Vec<Box<dyn PubSubCallBack>> = Vec::new();
         match name.as_str() {
             "event_create" => Ok(messages
                 .iter()
                 .filter_map(|v| serde_json::from_str::<CreateEventMessage>(&v.data).ok())
-                .for_each(|v| res.push(Box::new(v)))),
+                .map(|v| Box::new(v) as Box<dyn PubSubCallBack>)
+                .collect()),
             "event_delete" => Ok(messages
                 .iter()
                 .filter_map(|v| serde_json::from_str::<DeleteEventMessage>(&v.data).ok())
-                .for_each(|v| res.push(Box::new(v)))),
+                .map(|v| Box::new(v) as Box<dyn PubSubCallBack>)
+                .collect()),
             "event_update" => Ok(messages
                 .iter()
                 .filter_map(|v| serde_json::from_str::<UpdateEventMessage>(&v.data).ok())
-                .for_each(|v| res.push(Box::new(v)))),
+                .map(|v| Box::new(v) as Box<dyn PubSubCallBack>)
+                .collect()),
             "event_get" => Ok(messages
                 .iter()
                 .filter_map(|v| serde_json::from_str::<GetEventMessage>(&v.data).ok())
-                .for_each(|v| res.push(Box::new(v)))),
+                .map(|v| Box::new(v) as Box<dyn PubSubCallBack>)
+                .collect()),
             "events" => Ok(messages
                 .iter()
                 .filter_map(|v| serde_json::from_str::<GetEventsMessage>(&v.data).ok())
-                .for_each(|v| res.push(Box::new(v)))),
+                .map(|v| Box::new(v) as Box<dyn PubSubCallBack>)
+                .collect()),
             "categories" => Ok(messages
                 .iter()
                 .filter_map(|v| serde_json::from_str::<GetCategoriesMessage>(&v.data).ok())
-                .for_each(|v| res.push(Box::new(v)))),
+                .map(|v| Box::new(v) as Box<dyn PubSubCallBack>)
+                .collect()),
             "category_create" => Ok(messages
                 .iter()
                 .filter_map(|v| serde_json::from_str::<CreateCategoryMessage>(&v.data).ok())
-                .for_each(|v| res.push(Box::new(v)))),
+                .map(|v| Box::new(v) as Box<dyn PubSubCallBack>)
+                .collect()),
             "category_delete" => Ok(messages
                 .iter()
                 .filter_map(|v| serde_json::from_str::<DeleteCategoryMessage>(&v.data).ok())
-                .for_each(|v| res.push(Box::new(v)))),
+                .map(|v| Box::new(v) as Box<dyn PubSubCallBack>)
+                .collect()),
             "category_merge" => Ok(messages
                 .iter()
                 .filter_map(|v| serde_json::from_str::<MergeCategoriesMessage>(&v.data).ok())
-                .for_each(|v| res.push(Box::new(v)))),
+                .map(|v| Box::new(v) as Box<dyn PubSubCallBack>)
+                .collect()),
             _ => Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 "Topic not found",
             )),
-        }?;
-        Ok(res)
+        }
     }
 
     fn work_messages(
@@ -141,7 +148,7 @@ impl PubSubClient {
         let values: Vec<Message> = messages.into_iter().filter_map(|v| v.0.ok()).collect();
         let statuses: Vec<Status> = match self.parse_message_type(values, &name) {
             Ok(items) => items.iter().map(|v| v.handle(&self.manager)).collect(),
-            Err(e) => return future::err(cloud_pubsub::error::Error::IO(e))
+            Err(e) => return future::err(cloud_pubsub::error::Error::IO(e)),
         };
         future::ok((statuses, ids, name))
     }
