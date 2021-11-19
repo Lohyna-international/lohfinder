@@ -100,14 +100,14 @@ fn create_event_pubsub_test() {
     let time = chrono::Utc::now();
     let res = aw!(work_client.handle_messages()).expect("Failed to handle messages");
     println!("{:?}", chrono::Utc::now() - time);
-    assert!(res.iter().any(|f| f.id == 1 && f.code == 200));
+    assert!(res.iter().inspect(|f| println!("{:?}",f)).any(|f| f.id == 1 && f.code == 200));
     aw!(work_client.return_results(res)).expect("Failed to return results");
     let statuses = aw!(sub.get_messages::<pstypes::Status>()).expect("Failed to get statuses");
     assert!(statuses.iter().filter_map(|f| f.0.as_ref().ok()).any(|s| s.id == 1 && s.code == 200));
 
     aw!(topic.publish(serde_json::to_string(&message).expect("Failed to serialize message"))).expect("Failed to send message");
     let res = aw!(work_client.handle_messages()).expect("Failed to handle messages");
-    assert!(res.iter().any(|f| f.id == 0 && f.code == 200));
+    assert!(res.iter().inspect(|f| println!("{:?}",f)).any(|f| f.id == 0 && f.code == 200));
     aw!(work_client.return_results(res)).expect("Failed to return results");
     let statuses = aw!(sub.get_messages::<pstypes::Status>()).expect("Failed to get statuses");
     assert!(statuses.iter().filter_map(|f| f.0.as_ref().ok()).any(|s| s.id == 0 && s.code == 200));

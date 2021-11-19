@@ -78,6 +78,57 @@ impl PubSubClient {
         }
     }
 
+    fn parse_message_type(
+        &self,
+        messages: Vec<Message>,
+        name: &String,
+    ) -> Result<Vec<Box<dyn PubSubCallBack>>, std::io::Error> {
+        let mut res: Vec<Box<dyn PubSubCallBack>> = Vec::new();
+        match name.as_str() {
+            "event_create" => Ok(messages
+                .iter()
+                .filter_map(|v| serde_json::from_str::<CreateEventMessage>(&v.data).ok())
+                .for_each(|v| res.push(Box::new(v)))),
+            "event_delete" => Ok(messages
+                .iter()
+                .filter_map(|v| serde_json::from_str::<DeleteEventMessage>(&v.data).ok())
+                .for_each(|v| res.push(Box::new(v)))),
+            "event_update" => Ok(messages
+                .iter()
+                .filter_map(|v| serde_json::from_str::<UpdateEventMessage>(&v.data).ok())
+                .for_each(|v| res.push(Box::new(v)))),
+            "event_get" => Ok(messages
+                .iter()
+                .filter_map(|v| serde_json::from_str::<GetEventMessage>(&v.data).ok())
+                .for_each(|v| res.push(Box::new(v)))),
+            "events" => Ok(messages
+                .iter()
+                .filter_map(|v| serde_json::from_str::<GetEventsMessage>(&v.data).ok())
+                .for_each(|v| res.push(Box::new(v)))),
+            "categories" => Ok(messages
+                .iter()
+                .filter_map(|v| serde_json::from_str::<GetCategoriesMessage>(&v.data).ok())
+                .for_each(|v| res.push(Box::new(v)))),
+            "category_create" => Ok(messages
+                .iter()
+                .filter_map(|v| serde_json::from_str::<CreateCategoryMessage>(&v.data).ok())
+                .for_each(|v| res.push(Box::new(v)))),
+            "category_delete" => Ok(messages
+                .iter()
+                .filter_map(|v| serde_json::from_str::<DeleteCategoryMessage>(&v.data).ok())
+                .for_each(|v| res.push(Box::new(v)))),
+            "category_merge" => Ok(messages
+                .iter()
+                .filter_map(|v| serde_json::from_str::<MergeCategoriesMessage>(&v.data).ok())
+                .for_each(|v| res.push(Box::new(v)))),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Topic not found",
+            )),
+        }?;
+        Ok(res)
+    }
+
     fn work_messages(
         &self,
         messages: Vec<(Result<Message, error::Error>, String)>,
@@ -88,58 +139,9 @@ impl PubSubClient {
     > {
         let ids: Vec<String> = messages.iter().map(|v| v.1.clone()).collect();
         let values: Vec<Message> = messages.into_iter().filter_map(|v| v.0.ok()).collect();
-        let statuses: Vec<Status> = match name.as_str() {
-            "event_create" => values
-                .iter()
-                .filter_map(|v| serde_json::from_str::<CreateEventMessage>(&v.data).ok())
-                .map(|v| v.handle(&self.manager))
-                .collect::<Vec<Status>>(),
-            "event_delete" => values
-                .iter()
-                .filter_map(|v| serde_json::from_str::<DeleteEventMessage>(&v.data).ok())
-                .map(|v| v.handle(&self.manager))
-                .collect::<Vec<Status>>(),
-            "event_update" => values
-                .iter()
-                .filter_map(|v| serde_json::from_str::<UpdateEventMessage>(&v.data).ok())
-                .map(|v| v.handle(&self.manager))
-                .collect::<Vec<Status>>(),
-            "event_get" => values
-                .iter()
-                .filter_map(|v| serde_json::from_str::<GetEventMessage>(&v.data).ok())
-                .map(|v| v.handle(&self.manager))
-                .collect::<Vec<Status>>(),
-            "events" => values
-                .iter()
-                .filter_map(|v| serde_json::from_str::<GetEventsMessage>(&v.data).ok())
-                .map(|v| v.handle(&self.manager))
-                .collect::<Vec<Status>>(),
-            "categories" => values
-                .iter()
-                .filter_map(|v| serde_json::from_str::<GetCategoriesMessage>(&v.data).ok())
-                .map(|v| v.handle(&self.manager))
-                .collect::<Vec<Status>>(),
-            "category_create" => values
-                .iter()
-                .filter_map(|v| serde_json::from_str::<CreateCategoryMessage>(&v.data).ok())
-                .map(|v| v.handle(&self.manager))
-                .collect::<Vec<Status>>(),
-            "category_delete" => values
-                .iter()
-                .filter_map(|v| serde_json::from_str::<DeleteCategoryMessage>(&v.data).ok())
-                .map(|v| v.handle(&self.manager))
-                .collect::<Vec<Status>>(),
-            "category_merge" => values
-                .iter()
-                .filter_map(|v| serde_json::from_str::<MergeCategoriesMessage>(&v.data).ok())
-                .map(|v| v.handle(&self.manager))
-                .collect::<Vec<Status>>(),
-            _ => {
-                return future::err(cloud_pubsub::error::Error::IO(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "Topic not found",
-                )))
-            }
+        let statuses: Vec<Status> = match self.parse_message_type(values, &name) {
+            Ok(items) => items.iter().map(|v| v.handle(&self.manager)).collect(),
+            Err(e) => return future::err(cloud_pubsub::error::Error::IO(e))
         };
         future::ok((statuses, ids, name))
     }
