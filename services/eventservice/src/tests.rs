@@ -48,7 +48,7 @@ fn test_events(cat1 : Option<Category>, cat2 : Option<Category>,cat3 : Option<Ca
 #[test]
 fn merge_test() {
     assert_eq!(
-        data_manager::EventManager::_merge(b"", Some(b"ab"), b"cd"),
+        data_manager::merge(b"", Some(b"ab"), b"cd"),
         Some((b"abcd").to_vec())
     );
 }
@@ -90,7 +90,7 @@ fn compare_by_val_test() {
     );
     assert_eq!(
         data_manager::EventManager::_compare_by_val(
-            Some(&"non_exisint".to_string()),
+            Some(&"non_existent".to_string()),
             &event1,
             &event2
         ),

@@ -8,6 +8,15 @@ use sled;
 use std::collections::HashSet;
 use tokio::runtime::Handle;
 
+pub fn merge(key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> {
+    let mut old_vec = match old_v {
+        Some(v) => v.to_vec(),
+        None => Vec::new(),
+    };
+    old_vec.append(&mut new_v.to_vec());
+    Some(old_vec)
+}
+
 pub struct EventManager {
     db: sled::Db,
     events_name: String,
@@ -27,19 +36,10 @@ impl EventManager {
         let events = manager.db.open_tree(&manager.events_name)?;
         let orgs = manager.db.open_tree(&manager.organizers_name)?;
         let cats = manager.db.open_tree(&manager.categories_name)?;
-        events.set_merge_operator(EventManager::_merge);
-        orgs.set_merge_operator(EventManager::_merge);
-        cats.set_merge_operator(EventManager::_merge);
+        events.set_merge_operator(merge);
+        orgs.set_merge_operator(merge);
+        cats.set_merge_operator(merge);
         Ok(manager)
-    }
-
-    pub fn _merge(key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> {
-        let mut old_vec = match old_v {
-            Some(v) => v.to_vec(),
-            None => Vec::new(),
-        };
-        old_vec.append(&mut new_v.to_vec());
-        Some(old_vec)
     }
 
     pub fn _compare_by_val(
@@ -97,7 +97,7 @@ impl EventManager {
     pub fn generate_id(&self) -> Result<u64, Box<dyn std::error::Error>> {
         match self.db.generate_id() {
             Ok(id) => Ok(id),
-            Err(e) => Err(Box::new(e))
+            Err(e) => Err(Box::new(e)),
         }
     }
 
@@ -174,6 +174,30 @@ impl EventManager {
         Event::from_json(&String::from_utf8(event.unwrap().to_vec())?)
     }
 
+    fn _events_for_organizer(
+        &self,
+        organizer: u64,
+    ) -> Result<Vec<u64>, Box<dyn std::error::Error>> {
+        let organizers = self.db.open_tree(&self.organizers_name)?;
+        let org_ids = organizers.get(organizer.to_be_bytes())?;
+        match org_ids {
+            Some(ids) => Ok(EventManager::_ids_to_vec(&ids)),
+            None => Ok(Vec::new()),
+        }
+    }
+
+    fn _events_for_category(
+        &self,
+        category: &String,
+    ) -> Result<Vec<u64>, Box<dyn std::error::Error>> {
+        let categories = self.db.open_tree(&self.categories_name)?;
+        let cat_ids = categories.get(category.as_bytes())?;
+        match cat_ids {
+            Some(ids) => Ok(EventManager::_ids_to_vec(&ids)),
+            None => Ok(Vec::new()),
+        }
+    }
+
     pub fn get_events(
         &self,
         sort_key: Option<&String>,
@@ -181,66 +205,38 @@ impl EventManager {
         category: Option<&String>,
     ) -> Result<Vec<Event>, Box<dyn std::error::Error>> {
         let events = self.db.open_tree(&self.events_name)?;
-        let mut return_events = Vec::new();
-        if organizer.is_none() && category.is_none() {
-            events.iter().for_each(|v| {
-                if v.is_ok() {
-                    let (_, event) = v.unwrap();
-                    let parsed = Event::from_json(&String::from_utf8(event.to_vec()).unwrap());
-                    if parsed.is_ok() {
-                        return_events.push(parsed.unwrap());
+        let return_events: Result<Vec<Event>, Box<dyn std::error::Error>> =
+            match (organizer, category) {
+                (None, None) => Ok(events
+                    .iter()
+                    .filter_map(|f| f.ok())
+                    .filter_map(|(_, event)| {
+                        Event::from_json(&String::from_utf8(event.to_vec()).unwrap()).ok()
+                    })
+                    .collect()),
+                _ => Ok(match (organizer, category) {
+                    (Some(org), Some(cat)) => {
+                        let o_ids: HashSet<u64> =
+                            self._events_for_organizer(org)?.into_iter().collect();
+                        let c_ids: HashSet<u64> =
+                            self._events_for_category(cat)?.into_iter().collect();
+                        let res: Vec<u64> = (&o_ids & &c_ids).into_iter().collect();
+                        res.into_iter()
                     }
+                    (Some(org), None) => self._events_for_organizer(org)?.into_iter(),
+                    (None, Some(cat)) => self._events_for_category(cat)?.into_iter(),
+                    (None, None) => Vec::new().into_iter(),
                 }
-            })
-        } else {
-            let mut ids: Vec<u64> = Vec::new();
-            if organizer.is_some() && category.is_some() {
-                let organizers = self.db.open_tree(&self.organizers_name)?;
-                let org_ids = organizers.get(organizer.unwrap().to_be_bytes())?;
-                let categories = self.db.open_tree(&self.categories_name)?;
-                let cat_ids = categories.get(category.unwrap().as_bytes())?;
-                if org_ids.is_some() && cat_ids.is_some() {
-                    let o_ids: HashSet<u64> = EventManager::_ids_to_vec(&org_ids.unwrap())
-                        .into_iter()
-                        .collect();
-                    let c_ids: HashSet<u64> = EventManager::_ids_to_vec(&cat_ids.unwrap())
-                        .into_iter()
-                        .collect();
-                    let mut res: Vec<u64> = o_ids.intersection(&c_ids).map(|t| t.clone()).collect();
-                    ids.append(&mut res);
-                } else if org_ids.is_some() {
-                    ids.append(&mut EventManager::_ids_to_vec(&org_ids.unwrap()));
-                } else if cat_ids.is_some() {
-                    ids.append(&mut EventManager::_ids_to_vec(&cat_ids.unwrap()));
-                }
-            } else if organizer.is_some() {
-                let organizers = self.db.open_tree(&self.organizers_name)?;
-                let org_ids = organizers.get(organizer.unwrap().to_be_bytes())?;
-                if org_ids.is_some() {
-                    ids.append(&mut EventManager::_ids_to_vec(&org_ids.unwrap()));
-                }
-            } else if category.is_some() {
-                let categories = self.db.open_tree(&self.categories_name)?;
-                let cat_ids = categories.get(category.unwrap().as_bytes())?;
-                if cat_ids.is_some() {
-                    ids.append(&mut EventManager::_ids_to_vec(&cat_ids.unwrap()));
-                }
-            }
-            let events_raw = ids.into_iter().filter_map(|v| events.get(v.to_be_bytes()).ok());
-            events_raw.for_each(|v| {
-                if v.is_some() {
-                    let parsed =
-                        Event::from_json(&String::from_utf8(v.unwrap().to_vec()).unwrap());
-                    if parsed.is_ok() {
-                        return_events.push(parsed.unwrap());
-                    }
-                }
-            });
-        }
-        return_events.sort_by(|a, b| {
+                .filter_map(|v| events.get(v.to_be_bytes()).ok())
+                .filter_map(|v| v)
+                .filter_map(|v| Event::from_json(&String::from_utf8(v.to_vec()).unwrap()).ok())
+                .collect()),
+            };
+        let mut result = return_events?;
+        result.sort_by(|a, b| {
             EventManager::_compare_by_val(sort_key, a, b).unwrap_or(std::cmp::Ordering::Equal)
         });
-        Ok(return_events)
+        Ok(result)
     }
 
     pub fn create_category(&self, cat: &Category) -> Result<(), Box<dyn std::error::Error>> {
