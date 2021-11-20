@@ -1,0 +1,11 @@
+# This is a development compose file.
+version: "3.8"
+services:
+  event-application-service:
+    container_name: docker_event_application_service
+    build: 
+      context: services/event-application-service
+    volumes:
+      - ~/.config/:/root/.config
+    environment:
+      - APP_NAME=lohfinder-app
