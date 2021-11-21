@@ -17,6 +17,14 @@ pub fn merge(key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> 
     Some(old_vec)
 }
 
+pub enum EventSortKey {
+    Title,
+    Organizer,
+    Created,
+    Planning,
+    Default,
+}
+
 pub struct EventManager {
     db: sled::Db,
     events_name: String,
@@ -43,17 +51,18 @@ impl EventManager {
     }
 
     fn _compare_by_val(
-        key: Option<&String>,
+        key: Option<&EventSortKey>,
         a: &Event,
         b: &Event,
     ) -> Option<std::cmp::Ordering> {
         match key {
-            Some(value) => match value.as_str() {
-                "title" => a.title.partial_cmp(&b.title),
-                "organizer" => a.organizer.partial_cmp(&b.organizer),
-                "date_created" => a.date_created.partial_cmp(&b.date_created),
-                "date_planning" => a.date_planning.partial_cmp(&b.date_planning),
-                &_ => a.date_planning.partial_cmp(&b.date_planning),
+            Some(value) => match value {
+                &EventSortKey::Title => a.title.partial_cmp(&b.title),
+                &EventSortKey::Organizer => a.organizer.partial_cmp(&b.organizer),
+                &EventSortKey::Created => a.date_created.partial_cmp(&b.date_created),
+                &EventSortKey::Planning | &EventSortKey::Default => {
+                    a.date_planning.partial_cmp(&b.date_planning)
+                }
             },
             None => a.date_planning.partial_cmp(&b.date_planning),
         }
@@ -102,11 +111,11 @@ impl EventManager {
     }
 
     pub fn create_event(&self, new_event: &Event) -> Result<(), Box<dyn std::error::Error>> {
-        let id = new_event.id.to_be_bytes().clone();
-        let org_id = new_event.organizer.to_be_bytes().clone();
+        let id = new_event.id.to_be_bytes();
+        let org_id = new_event.organizer.to_be_bytes();
         let cat = new_event.category.as_bytes();
         let events = self.db.open_tree(&self.events_name)?;
-        events.insert(id.clone(), new_event.to_json()?.as_bytes())?;
+        events.insert(id, new_event.to_json()?.as_bytes())?;
         let organizers = self.db.open_tree(&self.organizers_name)?;
         let categories = self.db.open_tree(&self.categories_name)?;
         if organizers.contains_key(&org_id)? {
@@ -132,7 +141,7 @@ impl EventManager {
             return Ok(());
         }
         let event = Event::from_json(&String::from_utf8(events.get(id)?.unwrap().to_vec())?)?;
-        let org_id = event.organizer.to_be_bytes().clone();
+        let org_id = event.organizer.to_be_bytes();
         let cat = event.category.as_bytes();
         events.remove(id)?;
         let organizers = self.db.open_tree(&self.organizers_name)?;
@@ -155,7 +164,7 @@ impl EventManager {
     }
 
     pub fn update_event(&self, new_event: &Event) -> Result<(), Box<dyn std::error::Error>> {
-        let id = new_event.id.to_be_bytes().clone();
+        let id = new_event.id.to_be_bytes();
         let events = self.db.open_tree(&self.events_name)?;
         events.insert(id, new_event.to_json().unwrap().as_bytes())?;
         Ok(())
@@ -165,13 +174,13 @@ impl EventManager {
         let id = event_id.to_be_bytes();
         let events = self.db.open_tree(&self.events_name)?;
         let event = events.get(id)?;
-        if event.is_none() {
-            return Err(Box::new(std::io::Error::new(
+        match event {
+            Some(e) => Event::from_json(&String::from_utf8(e.to_vec())?),
+            None => Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "Event not found",
-            )));
+            ))),
         }
-        Event::from_json(&String::from_utf8(event.unwrap().to_vec())?)
     }
 
     fn _events_for_organizer(
@@ -200,7 +209,7 @@ impl EventManager {
 
     pub fn get_events(
         &self,
-        sort_key: Option<&String>,
+        sort_key: Option<&EventSortKey>,
         organizer: Option<u64>,
         category: Option<&String>,
     ) -> Result<Vec<Event>, Box<dyn std::error::Error>> {
@@ -278,17 +287,15 @@ impl EventManager {
         let id1 = cat1.as_bytes();
         let id2 = cat2.as_bytes();
         let mut to_add: Vec<u8> = Vec::new();
-        if categories.contains_key(id2)? {
-            match categories.get(id2)? {
-                Some(values) => {
-                    to_add.append(&mut values.to_vec());
-                }
-                None => {
-                    return Err(Box::new(std::io::Error::new(
-                        std::io::ErrorKind::NotFound,
-                        "Category not found",
-                    )))
-                }
+        match categories.get(id2)? {
+            Some(values) => {
+                to_add.append(&mut values.to_vec());
+            }
+            None => {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "Category not found",
+                )))
             }
         }
         if categories.contains_key(id1)? {

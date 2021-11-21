@@ -8,3 +8,8 @@ async fn main() {}
 
 #[cfg(test)]
 mod tests;
+
+#[test]
+fn clean_tests() {
+    assert!(std::fs::remove_dir_all("./test").is_ok());
+}
