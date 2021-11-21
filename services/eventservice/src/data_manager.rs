@@ -42,7 +42,7 @@ impl EventManager {
         Ok(manager)
     }
 
-    pub fn _compare_by_val(
+    fn _compare_by_val(
         key: Option<&String>,
         a: &Event,
         b: &Event,
@@ -59,7 +59,7 @@ impl EventManager {
         }
     }
 
-    pub fn _remove_id(data: &[u8], id: &[u8; 8]) -> Option<Vec<u8>> {
+    fn _remove_id(data: &[u8], id: &[u8; 8]) -> Option<Vec<u8>> {
         let mut data_vec = data.to_vec();
         match data_vec.array_chunks::<8>().position(|&e| e.eq(id)) {
             Some(index) => {
@@ -70,7 +70,7 @@ impl EventManager {
         }
     }
 
-    pub fn _events_to_vec(data: &Vec<&[u8]>) -> Vec<Event> {
+    fn _events_to_vec(data: &Vec<&[u8]>) -> Vec<Event> {
         let mut res = Vec::new();
         data.iter().for_each(
             |o| match Event::from_json(&String::from_utf8(o.to_vec()).unwrap()) {
@@ -81,13 +81,13 @@ impl EventManager {
         res
     }
 
-    pub fn _ids_to_vec(data: &[u8]) -> Vec<u64> {
+    fn _ids_to_vec(data: &[u8]) -> Vec<u64> {
         data.array_chunks::<8>()
             .map(|b| u64::from_be_bytes(*b))
             .collect::<Vec<u64>>()
     }
 
-    pub fn _reset_all(self) -> Result<bool, Box<dyn std::error::Error>> {
+    pub fn reset_all(self) -> Result<bool, Box<dyn std::error::Error>> {
         self.db.drop_tree(self.events_name)?;
         self.db.drop_tree(self.organizers_name)?;
         self.db.drop_tree(self.categories_name)?;

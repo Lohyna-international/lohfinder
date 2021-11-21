@@ -53,89 +53,6 @@ fn merge_test() {
     );
 }
 
-#[test]
-fn compare_by_val_test() {
-    let (event1, event2, _) = test_events(None, None, None);
-    assert_eq!(
-        data_manager::EventManager::_compare_by_val(None, &event1, &event2),
-        Some(std::cmp::Ordering::Greater)
-    );
-    assert_eq!(
-        data_manager::EventManager::_compare_by_val(Some(&"title".to_string()), &event1, &event2),
-        Some(std::cmp::Ordering::Less)
-    );
-    assert_eq!(
-        data_manager::EventManager::_compare_by_val(
-            Some(&"organizer".to_string()),
-            &event1,
-            &event2
-        ),
-        Some(std::cmp::Ordering::Greater)
-    );
-    assert_eq!(
-        data_manager::EventManager::_compare_by_val(
-            Some(&"date_created".to_string()),
-            &event1,
-            &event2
-        ),
-        Some(std::cmp::Ordering::Less)
-    );
-    assert_eq!(
-        data_manager::EventManager::_compare_by_val(
-            Some(&"date_planning".to_string()),
-            &event1,
-            &event2
-        ),
-        Some(std::cmp::Ordering::Greater)
-    );
-    assert_eq!(
-        data_manager::EventManager::_compare_by_val(
-            Some(&"non_existent".to_string()),
-            &event1,
-            &event2
-        ),
-        Some(std::cmp::Ordering::Greater)
-    );
-}
-
-#[test]
-fn remove_id_test() {
-    let mut ids = (42 as u64).to_be_bytes().to_vec();
-    ids.append(&mut (43 as u64).to_be_bytes().to_vec());
-    let data = &ids[..];
-    assert_eq!(
-        data_manager::EventManager::_remove_id(data, &(42 as u64).to_be_bytes()),
-        Some((43 as u64).to_be_bytes().to_vec())
-    );
-    assert_eq!(
-        data_manager::EventManager::_remove_id(data, &(1 as u64).to_be_bytes()),
-        None
-    );
-}
-
-#[test]
-fn events_to_vec_test() {
-    let (event1, event2, _) = test_events(None, None, None);
-    assert_eq!(
-        data_manager::EventManager::_events_to_vec(&vec![
-            event1.to_json().unwrap().as_bytes(),
-            event2.to_json().unwrap().as_bytes()
-        ]),
-        vec![event1, event2]
-    );
-}
-
-#[test]
-fn ids_to_vec_test() {
-    assert_eq!(
-        data_manager::EventManager::_ids_to_vec(&(42 as u64).to_be_bytes()),
-        vec![42 as u64]
-    );
-    assert_eq!(
-        data_manager::EventManager::_ids_to_vec(b"42"),
-        Vec::<u64>::new()
-    );
-}
 
 #[test]
 fn create_event_test() {
@@ -151,7 +68,7 @@ fn create_event_test() {
         .expect("Failed to create event");
     let event = manager.get_event(&1).expect("Failed to get event");
     assert_eq!(event, event1);
-    manager._reset_all().expect("Failed to delete db");
+    manager.reset_all().expect("Failed to delete db");
 }
 
 #[test]
@@ -180,7 +97,7 @@ fn delete_event_test() {
         .expect("Failed to get events");
     assert_eq!(events, vec![event2.clone()]);
     assert!(manager.delete_event(&event2.id).is_ok());
-    manager._reset_all().expect("Failed to delete db");
+    manager.reset_all().expect("Failed to delete db");
 }
 
 #[test]
@@ -209,7 +126,7 @@ fn update_event_test() {
         .update_event(&event2)
         .expect("Failed to update event");
     assert_eq!(manager.get_event(&1).unwrap(), event2);
-    manager._reset_all().expect("Failed to delete db");
+    manager.reset_all().expect("Failed to delete db");
 }
 
 #[test]
@@ -225,7 +142,7 @@ fn get_event_test() {
         .create_event(&event1)
         .expect("Failed to create event");
     assert_eq!(manager.get_event(&1).unwrap(), event1);
-    manager._reset_all().expect("Failed to delete db");
+    manager.reset_all().expect("Failed to delete db");
 }
 
 #[test]
@@ -278,7 +195,7 @@ fn get_events_test() {
             .unwrap(),
         vec![event3.clone()]
     );
-    manager._reset_all().expect("Failed to delete db");
+    manager.reset_all().expect("Failed to delete db");
 }
 
 #[test]
@@ -303,7 +220,7 @@ fn category_get_delete_test() {
         .expect("Failed to delete category");
     assert!(manager.delete_category(&cat4).is_err());
     assert_eq!(manager.get_categories().unwrap(), vec![cat2, cat3]);
-    manager._reset_all().expect("Failed to delete db");
+    manager.reset_all().expect("Failed to delete db");
 }
 
 #[test]
@@ -347,5 +264,5 @@ fn merge_categories_test() {
             .unwrap(),
         vec![event1, event2, event3]
     );
-    manager._reset_all().expect("Failed to delete db");
+    manager.reset_all().expect("Failed to delete db");
 }
