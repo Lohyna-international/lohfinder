@@ -3,3 +3,6 @@
 *google_cloud.json
 services/user_service/env/
 services/user_service/__pycache__/
+key.json
+services/eventservice/target
+services/eventservice/test
