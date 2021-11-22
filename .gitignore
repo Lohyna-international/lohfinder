@@ -1,1 +1,4 @@
 services/api_service/.env.dev
+key.json
+services/eventservice/target
+services/eventservice/test
