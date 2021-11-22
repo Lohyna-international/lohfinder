@@ -207,6 +207,20 @@ impl EventManager {
         }
     }
 
+    fn _get_all_events(&self) -> Result<Vec<Event>, Box<dyn std::error::Error>> {
+        let events = self.db.open_tree(&self.events_name)?;
+        Ok(events
+            .iter()
+            .filter_map(|f| {
+                if let Ok((_, event)) = f {
+                    Event::from_json(&String::from_utf8(event.to_vec()).unwrap()).ok()
+                } else {
+                    None
+                }
+            })
+            .collect())
+    }
+
     pub fn get_events(
         &self,
         sort_key: Option<&EventSortKey>,
@@ -214,38 +228,40 @@ impl EventManager {
         category: Option<&String>,
     ) -> Result<Vec<Event>, Box<dyn std::error::Error>> {
         let events = self.db.open_tree(&self.events_name)?;
-        let return_events: Result<Vec<Event>, Box<dyn std::error::Error>> =
-            match (organizer, category) {
-                (None, None) => Ok(events
-                    .iter()
-                    .filter_map(|f| f.ok())
-                    .filter_map(|(_, event)| {
-                        Event::from_json(&String::from_utf8(event.to_vec()).unwrap()).ok()
-                    })
-                    .collect()),
-                _ => Ok(match (organizer, category) {
-                    (Some(org), Some(cat)) => {
-                        let o_ids: HashSet<u64> =
-                            self._events_for_organizer(org)?.into_iter().collect();
-                        let c_ids: HashSet<u64> =
-                            self._events_for_category(cat)?.into_iter().collect();
-                        let res: Vec<u64> = (&o_ids & &c_ids).into_iter().collect();
-                        res.into_iter()
-                    }
-                    (Some(org), None) => self._events_for_organizer(org)?.into_iter(),
-                    (None, Some(cat)) => self._events_for_category(cat)?.into_iter(),
-                    (None, None) => Vec::new().into_iter(),
-                }
-                .filter_map(|v| events.get(v.to_be_bytes()).ok())
-                .filter_map(|v| v)
-                .filter_map(|v| Event::from_json(&String::from_utf8(v.to_vec()).unwrap()).ok())
-                .collect()),
+        let mut result_events = Vec::new();
+        if organizer.is_none() && category.is_none() {
+            result_events.append(&mut self._get_all_events()?);
+        } else {
+            let o: Option<HashSet<u64>> = match organizer {
+                Some(org) => Some(self._events_for_organizer(org)?.into_iter().collect()),
+                None => None,
             };
-        let mut result = return_events?;
-        result.sort_by(|a, b| {
+            let c: Option<HashSet<u64>> = match category {
+                Some(cat) => Some(self._events_for_category(cat)?.into_iter().collect()),
+                None => None,
+            };
+            let intersect_events = match (c, o) {
+                (Some(c), Some(o)) => (&c & &o),
+                (None, Some(o)) => o,
+                (Some(c), None) => c,
+                (None, None) => HashSet::new(),
+            };
+            let mut result: Vec<Event> = intersect_events
+                .iter()
+                .filter_map(|v| {
+                    if let Ok(Some(f)) = events.get(v.to_be_bytes()) {
+                        return Event::from_json(&String::from_utf8(f.to_vec()).unwrap()).ok();
+                    }
+                    None
+                })
+                .collect();
+            result_events.append(&mut result);
+        }
+        result_events.sort_by(|a, b| {
             EventManager::_compare_by_val(sort_key, a, b).unwrap_or(std::cmp::Ordering::Equal)
         });
-        Ok(result)
+
+        Ok(result_events)
     }
 
     pub fn create_category(&self, cat: &Category) -> Result<(), Box<dyn std::error::Error>> {
