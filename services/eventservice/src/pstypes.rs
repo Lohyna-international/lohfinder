@@ -128,18 +128,6 @@ impl PubSubCallBack for CreateEventMessage {
     }
 }
 
-impl FromPubSubMessage for CreateEventMessage {
-    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
-        match message.decode() {
-            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(&String::from_utf8(bytes).unwrap())) {
-                Ok(m) => Ok(m),
-                Err(e) => Err(error::Error::from(e)),
-            },
-            Err(e) => Err(error::Error::from(e)),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct DeleteEventMessage {
     pub message_id: u64,
@@ -161,18 +149,6 @@ impl PubSubCallBack for DeleteEventMessage {
 
     fn error_message(&self, error: Box<dyn std::error::Error>) -> String {
         format!("Failed to delete event, error : {:?}", error)
-    }
-}
-
-impl FromPubSubMessage for DeleteEventMessage {
-    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
-        match message.decode() {
-            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(&String::from_utf8(bytes).unwrap())) {
-                Ok(m) => Ok(m),
-                Err(e) => Err(error::Error::from(e)),
-            },
-            Err(e) => Err(error::Error::from(e)),
-        }
     }
 }
 
@@ -217,18 +193,6 @@ impl PubSubCallBack for UpdateEventMessage {
     }
 }
 
-impl FromPubSubMessage for UpdateEventMessage {
-    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
-        match message.decode() {
-            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(&String::from_utf8(bytes).unwrap())) {
-                Ok(m) => Ok(m),
-                Err(e) => Err(error::Error::from(e)),
-            },
-            Err(e) => Err(error::Error::from(e)),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct GetEventMessage {
     pub message_id: u64,
@@ -250,18 +214,6 @@ impl PubSubCallBack for GetEventMessage {
 
     fn error_message(&self, error: Box<dyn std::error::Error>) -> String {
         format!("Failed to get event, error : {:?}", error)
-    }
-}
-
-impl FromPubSubMessage for GetEventMessage {
-    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
-        match message.decode() {
-            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(&String::from_utf8(bytes).unwrap())) {
-                Ok(m) => Ok(m),
-                Err(e) => Err(error::Error::from(e)),
-            },
-            Err(e) => Err(error::Error::from(e)),
-        }
     }
 }
 
@@ -304,18 +256,6 @@ impl PubSubCallBack for GetEventsMessage {
     }
 }
 
-impl FromPubSubMessage for GetEventsMessage {
-    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
-        match message.decode() {
-            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(&String::from_utf8(bytes).unwrap())) {
-                Ok(m) => Ok(m),
-                Err(e) => Err(error::Error::from(e)),
-            },
-            Err(e) => Err(error::Error::from(e)),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
 pub struct CreateCategoryMessage {
     pub message_id: u64,
@@ -340,18 +280,6 @@ impl PubSubCallBack for CreateCategoryMessage {
     }
 }
 
-impl FromPubSubMessage for CreateCategoryMessage {
-    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
-        match message.decode() {
-            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(&String::from_utf8(bytes).unwrap())) {
-                Ok(m) => Ok(m),
-                Err(e) => Err(error::Error::from(e)),
-            },
-            Err(e) => Err(error::Error::from(e)),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct DeleteCategoryMessage {
     pub message_id: u64,
@@ -373,18 +301,6 @@ impl PubSubCallBack for DeleteCategoryMessage {
 
     fn error_message(&self, error: Box<dyn std::error::Error>) -> String {
         format!("Failed to delete category, error : {:?}", error)
-    }
-}
-
-impl FromPubSubMessage for DeleteCategoryMessage {
-    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
-        match message.decode() {
-            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(&String::from_utf8(bytes).unwrap())) {
-                Ok(m) => Ok(m),
-                Err(e) => Err(error::Error::from(e)),
-            },
-            Err(e) => Err(error::Error::from(e)),
-        }
     }
 }
 
@@ -420,18 +336,6 @@ impl PubSubCallBack for GetCategoriesMessage {
     }
 }
 
-impl FromPubSubMessage for GetCategoriesMessage {
-    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
-        match message.decode() {
-            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(&String::from_utf8(bytes).unwrap())) {
-                Ok(m) => Ok(m),
-                Err(e) => Err(error::Error::from(e)),
-            },
-            Err(e) => Err(error::Error::from(e)),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct MergeCategoriesMessage {
     pub message_id: u64,
@@ -454,17 +358,5 @@ impl PubSubCallBack for MergeCategoriesMessage {
 
     fn error_message(&self, error: Box<dyn std::error::Error>) -> String {
         format!("Failed to merge categories, error : {:?}", error)
-    }
-}
-
-impl FromPubSubMessage for MergeCategoriesMessage {
-    fn from(message: EncodedMessage) -> Result<Self, error::Error> {
-        match message.decode() {
-            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(&String::from_utf8(bytes).unwrap())) {
-                Ok(m) => Ok(m),
-                Err(e) => Err(error::Error::from(e)),
-            },
-            Err(e) => Err(error::Error::from(e)),
-        }
     }
 }
