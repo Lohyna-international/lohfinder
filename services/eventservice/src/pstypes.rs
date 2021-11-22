@@ -1,4 +1,4 @@
-use super::types::{Category, Event};
+use super::types::*;
 use super::*;
 use chrono;
 use cloud_pubsub::*;
@@ -273,7 +273,7 @@ struct EventsList {
 #[derive(Serialize, Deserialize)]
 pub struct GetEventsMessage {
     pub message_id: u64,
-    pub sort_key: Option<String>,
+    pub sort_key: Option<EventSortKey>,
     pub organizer: Option<u64>,
     pub category: Option<String>,
 }

@@ -2,6 +2,15 @@ use serde::{Deserialize, Serialize};
 
 pub type Category = String;
 
+#[derive(Serialize, Deserialize)]
+pub enum EventSortKey {
+    Title,
+    Organizer,
+    Created,
+    Planning,
+    Default,
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct Event {
     pub id: u64,

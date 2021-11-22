@@ -31,3 +31,8 @@ mod tests;
 
 #[cfg(test)]
 mod pubsub_tests;
+
+#[test]
+fn clean_tests() {
+    assert!(std::fs::remove_dir_all("./test").is_ok());
+}

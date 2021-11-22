@@ -48,7 +48,7 @@ impl PubSubClient {
     }
 
     pub fn clean_db(&self) -> bool {
-        self.manager._reset_all().unwrap_or(false)
+        self.manager.reset_all().unwrap_or(false)
     }
 
     pub async fn return_results(
