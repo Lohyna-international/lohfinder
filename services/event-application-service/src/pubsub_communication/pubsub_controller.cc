@@ -6,8 +6,10 @@ namespace pubsub = ::google::cloud::pubsub;
 namespace cloud = ::google::cloud;
 
 namespace eas::pubsub_app {
+
+// 4 threads should be enough as simple initial implemetation.
 PubSubController::PubSubController(std::string app)
-    : app_name_{std::move(app)} {}
+    : app_name_{std::move(app)}, pubsub_thread_pool_{ThreadPool(4)} {}
 
 void PubSubController::Execute() {
   if (app_name_.empty()) throw std::runtime_error("app name is empty!");

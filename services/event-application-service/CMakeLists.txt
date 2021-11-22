@@ -22,6 +22,8 @@ add_executable(afs
   src/pubsub_communication/pubsub_controller.cc
   src/pubsub_communication/pubsub_subscribers.h
   src/pubsub_communication/pubsub_subscribers.cc
+  src/pubsub_communication/pubsub_thread_pool.h
+  src/pubsub_communication/pubsub_thread_pool.cc
   src/utils/signal_handler.h
 )
 

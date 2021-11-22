@@ -8,6 +8,7 @@
 #include "google/cloud/pubsub/publisher.h"
 #include "google/cloud/pubsub/subscriber.h"
 #include "pubsub_communication/pubsub_subscribers.h"
+#include "pubsub_communication/pubsub_thread_pool.h"
 
 namespace eas::pubsub_app {
 
@@ -28,7 +29,7 @@ class PubSubController {
 
  private:
   std::string app_name_ = "";
-  std::atomic<bool> is_active_ = false;
+  ThreadPool pubsub_thread_pool_ = ThreadPool(4);
   std::vector<google::cloud::pubsub::Subscriber> subscribers_;
   std::vector<google::cloud::future<google::cloud::Status>> sub_statuses_;
   std::vector<google::cloud::pubsub::Publisher> publishers_;
@@ -39,7 +40,10 @@ void PubSubController::SetupSubscriber(SubHandler &&item) {
   auto sub = google::cloud::pubsub::Subscriber(
       google::cloud::pubsub::MakeSubscriberConnection(
           google::cloud::pubsub::Subscription(app_name_,
-                                              std::string(SubHandler::topic))));
+                                              std::string(SubHandler::topic)),
+          google::cloud::Options{}
+              .set<google::cloud::GrpcCompletionQueueOption>(
+                  pubsub_thread_pool_.CompletionQueue())));
 
   sub_statuses_.emplace_back(sub.Subscribe(item));
   subscribers_.emplace_back(std::move(sub));

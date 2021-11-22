@@ -32,7 +32,6 @@ Application::Application(int argc, char* argv[]) : argc_{argc}, argv_{argv} {
 
 Application::~Application() {
   try {
-    LOG(INFO) << "DCTOR";
     google::ShutdownGoogleLogging();
   } catch (...) {
   }
