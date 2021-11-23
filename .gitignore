@@ -1,3 +1,8 @@
+*firebase.json
+*firebase_test.json
+*google_cloud.json
+services/user_service/env/
+services/user_service/__pycache__/
 services/api_service/.env.dev
 key.json
 services/eventservice/target
