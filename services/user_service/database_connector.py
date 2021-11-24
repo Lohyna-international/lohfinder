@@ -6,7 +6,7 @@ from firebase_admin import db
 
 class DatabaseAdmin:
 
-    def __init__(self,databaseURL, credentials_path):
+    def __init__(self, databaseURL, credentials_path):
         cred = credentials.Certificate(credentials_path)
         firebase_admin.initialize_app(cred,
         {

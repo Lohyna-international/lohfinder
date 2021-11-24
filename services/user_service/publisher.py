@@ -1,13 +1,13 @@
 import os
 import json
+import time
 from google.cloud import pubsub_v1
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getcwd() + "/google_cloud.json"
 
 
-def test_publisher():
+def test_publisher(topic_id):
     project_id = "lohfinder-app"
-    topic_id = "hello_topic"
 
     publisher = pubsub_v1.PublisherClient()
     topic_path = publisher.topic_path(project_id, topic_id)
@@ -20,3 +20,7 @@ def test_publisher():
 
     res = publisher.publish(topic_path, message)
     print(f"published message: {res.result()}")
+
+test_publisher("events")
+time.sleep(3)
+test_publisher("hello_topic")
