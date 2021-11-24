@@ -31,6 +31,16 @@ set(QUERIES_SRCS
   src/queries/queries.h
 )
 
+set(COMMANDS_SRCS
+  src/commands/domain.h
+  src/commands/commands_handler.h
+)
+
+set(BUILD_FLAGS
+  $<$<CONFIG:Debug>:-fsanitize=address -fno-omit-frame-pointer>
+  $<$<CONFIG:Release>:-O3>
+  -Wall -Wpedantic -Werror -Wextra)
+
 add_executable(afs 
   src/main.cc
   src/application.cc
@@ -38,12 +48,8 @@ add_executable(afs
   src/utils/signal_handler.h
   ${PUBSUB_CONTROLLER_SRCS}
   ${QUERIES_SRCS}
+  ${COMMANDS_SRCS}
 )
-
-set(BUILD_FLAGS
-  $<$<CONFIG:Debug>:-fsanitize=address -fno-omit-frame-pointer>
-  $<$<CONFIG:Release>:-O3>
-  -Wall -Wpedantic -Werror -Wextra)
 
 target_compile_features(afs PRIVATE cxx_std_17)
 target_compile_options(afs PUBLIC ${BUILD_FLAGS})
@@ -53,10 +59,18 @@ target_include_directories(afs PUBLIC src)
 
 add_executable(afs_test
   tests/mocks/connection_factory_mock.h
+  tests/mocks/commands_handler_mock.h
+  tests/mocks/query_handler_mock.h
   tests/pubsub_controller_test.cc
   ${PUBSUB_CONTROLLER_SRCS}
-  ${QUERIES_SRCS})
+  ${QUERIES_SRCS}
+  ${COMMANDS_SRCS})
 target_compile_features(afs_test PRIVATE cxx_std_17)
 target_compile_options(afs_test PUBLIC -Wall -Wpedantic -Werror -Wextra)
 target_include_directories(afs_test PUBLIC src tests)
-target_link_libraries(afs_test PRIVATE GTest::gmock GTest::gtest GTest::gmock_main GTest::gtest_main google-cloud-cpp::pubsub glog::glog)
+target_link_libraries(afs_test PRIVATE GTest::gmock 
+                                       GTest::gtest 
+                                       GTest::gmock_main 
+                                       GTest::gtest_main 
+                                       google-cloud-cpp::pubsub 
+                                       glog::glog)

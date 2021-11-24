@@ -8,6 +8,7 @@
 #include <string_view>
 #include <vector>
 
+#include "commands/commands_handler.h"
 #include "google/cloud/pubsub/publisher.h"
 #include "google/cloud/pubsub/subscriber.h"
 #include "pubsub_controller/connection_factory.h"
@@ -17,22 +18,25 @@
 
 namespace eas::pubsub_controller {
 
-// прослойка між subs і pubs.
-// можна передавати що я хочу зробити.
 class PubSubController final {
  public:
-  explicit PubSubController(std::unique_ptr<IConnFactory> conn_factory);
-  explicit PubSubController(std::string app_name,
-                            std::unique_ptr<IConnFactory> conn_factory);
+  explicit PubSubController(
+      std::unique_ptr<IConnFactory> conn_factory,
+      std::shared_ptr<queries::IQueryHandler> query_handler,
+      std::shared_ptr<commands::ICommandHandler> cmd_handler);
+  explicit PubSubController(
+      std::string app_name, std::unique_ptr<IConnFactory> conn_factory,
+      std::shared_ptr<queries::IQueryHandler> query_handler,
+      std::shared_ptr<commands::ICommandHandler> cmd_handler);
 
   bool IsConnectionActive();
   void Start();
   void Shutdown();
   void SetAppName(std::string app_name) { app_name_ = std::move(app_name); }
 
-
   template <typename MessageObject>
   void PublishResult(MessageObject obj);
+
  private:
   void RegisterSubscribers();
   void RegisterPublishers();
@@ -45,8 +49,13 @@ class PubSubController final {
 
  private:
   std::unique_ptr<IConnFactory> connection_factory_;
-  ThreadPool pubsub_thread_pool_ = ThreadPool(6);
+
+  std::shared_ptr<queries::IQueryHandler> query_handler_;
+  std::shared_ptr<commands::ICommandHandler> cmd_handler_;
+
   std::string app_name_ = "";
+  ThreadPool pubsub_thread_pool_ = ThreadPool(6);
+
   std::vector<google::cloud::pubsub::Subscriber> subscribers_;
   std::vector<google::cloud::future<google::cloud::Status>>
       subscriber_sessions_;
@@ -57,7 +66,10 @@ template <typename MessageObject>
 void PubSubController::PublishResult(MessageObject obj) {
   namespace pubsub = google::cloud::pubsub;
   pubsub::Publisher pub = publishers_.at(std::string(MessageObject::topic));
-  pub.Publish(pubsub::MessageBuilder{}.SetData(obj.ToString()).Build());
+  pub.Publish(pubsub::MessageBuilder{}
+                  .SetData(obj.ToString())
+                  .InsertAttribute("sender", "eas")
+                  .Build());
 }
 
 template <typename MessageType>
@@ -68,7 +80,8 @@ void PubSubController::SetupPublisher() {
   auto topic_name = std::string(MessageType::topic);
   auto topic = pubsub::Topic(app_name_, topic_name);
   auto pub = pubsub::Publisher(connection_factory_->MakePublisherConnection(
-      topic, cloud::Options{}.set<cloud::GrpcCompletionQueueOption>(pubsub_thread_pool_.cq())));
+      topic, cloud::Options{}.set<cloud::GrpcCompletionQueueOption>(
+                 pubsub_thread_pool_.cq())));
   publishers_.insert_or_assign(topic_name, std::move(pub));
 }
 

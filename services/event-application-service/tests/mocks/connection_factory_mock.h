@@ -1,3 +1,6 @@
+#ifndef MOCKS_CONNECTION_FACTORY_MOCK_H
+#define MOCKS_CONNECTION_FACTORY_MOCK_H
+
 #include <gmock/gmock.h>
 
 #include "pubsub_controller/connection_factory.h"
@@ -15,3 +18,5 @@ class MockConnectionFactory final
               (google::cloud::pubsub::Topic topic, google::cloud::Options opts),
               (override));
 };
+
+#endif // MOCKS_CONNECTION_FACTORY_MOCK_H

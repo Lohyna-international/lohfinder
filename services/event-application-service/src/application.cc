@@ -3,9 +3,11 @@
 #include <chrono>
 #include <thread>
 
+#include "commands/commands_handler.h"
 #include "glog/logging.h"
 #include "google/cloud/pubsub/subscriber.h"
 #include "pubsub_controller/connection_factory.h"
+#include "queries/queries.h"
 #include "utils/signal_handler.h"
 
 namespace {
@@ -23,8 +25,12 @@ namespace eas {
 Application::Application(int argc, char* argv[])
     : argc_{argc},
       argv_{argv},
-      app_{std::make_unique<pubsub_controller::PubSubConnFactory>()} {
+      app_{pubsub_controller::PubSubController(
+          std::make_unique<pubsub_controller::PubSubConnFactory>(),
+          std::make_shared<queries::QueryHandler>(),
+          std::make_shared<commands::CommandHandler>())} {
   google::InitGoogleLogging(argv_[0]);
+
   if (argc_ < 2) {
     LOG(FATAL) << "Not enough arguments. App name has to be provided as a cmd "
                   "line argument.";

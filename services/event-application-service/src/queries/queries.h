@@ -13,6 +13,7 @@ struct IQueryHandler {
   virtual ~IQueryHandler() {}
 };
 
+// Dummy query handler.
 struct QueryHandler : public IQueryHandler {
   Form Execute(FormQuery) override { return {}; }
   Response Execute(UserResponseQuery) override { return {}; }

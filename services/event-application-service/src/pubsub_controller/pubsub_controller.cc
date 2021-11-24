@@ -14,19 +14,29 @@ struct FormQuery {
 
 namespace eas::pubsub_controller {
 
-PubSubController::PubSubController(std::unique_ptr<IConnFactory> conn_factory)
+PubSubController::PubSubController(
+    std::unique_ptr<IConnFactory> conn_factory,
+    std::shared_ptr<queries::IQueryHandler> query_handler,
+    std::shared_ptr<commands::ICommandHandler> cmd_handler)
     : connection_factory_{std::move(conn_factory)},
+      query_handler_{query_handler},
+      cmd_handler_{cmd_handler},
       pubsub_thread_pool_{ThreadPool(6)} {}
 
 // 6 threads should be enough as simple initial implemetation.
-PubSubController::PubSubController(std::string app,
-                                   std::unique_ptr<IConnFactory> conn_factory)
+PubSubController::PubSubController(
+    std::string app, std::unique_ptr<IConnFactory> conn_factory,
+    std::shared_ptr<queries::IQueryHandler> query_handler,
+    std::shared_ptr<commands::ICommandHandler> cmd_handler)
     : connection_factory_{std::move(conn_factory)},
-      pubsub_thread_pool_{ThreadPool(6)},
-      app_name_{std::move(app)} {}
+      query_handler_{query_handler},
+      cmd_handler_{cmd_handler},
+      app_name_{std::move(app)},
+      pubsub_thread_pool_{ThreadPool(6)} {}
 
 void PubSubController::Start() {
   if (app_name_.empty()) throw std::runtime_error("app name is empty!");
+  RegisterPublishers();
   RegisterSubscribers();
 }
 
@@ -41,19 +51,22 @@ void PubSubController::Shutdown() {
 }
 
 void PubSubController::RegisterSubscribers() {
-  auto queryHandler = std::make_shared<queries::QueryHandler>();
-  SetupSubscriber(CreateFormSub{});
-  SetupSubscriber(UpdateFormSub{});
-  SetupSubscriber(DeleteFormAndResponsesSub{});
-  SetupSubscriber(GetFormSub{this, queryHandler});
-  SetupSubscriber(CreateResponseSub{});
-  SetupSubscriber(DeleteResponseSub{});
-  SetupSubscriber(GetResponseSub{this, queryHandler});
-  SetupSubscriber(GetAllEventResponses{this, queryHandler});
-  SetupSubscriber(DeleteAllUserResponsesSub{});
+  SetupSubscriber(CreateFormSub{cmd_handler_});
+  SetupSubscriber(UpdateFormSub{cmd_handler_});
+  SetupSubscriber(DeleteFormAndResponsesSub{cmd_handler_});
+  SetupSubscriber(GetFormSub{this, query_handler_});
+  SetupSubscriber(CreateResponseSub{cmd_handler_});
+  SetupSubscriber(DeleteResponseSub{cmd_handler_});
+  SetupSubscriber(GetResponseSub{this, query_handler_});
+  SetupSubscriber(GetAllEventResponses{this, query_handler_});
+  SetupSubscriber(DeleteAllUserResponsesSub{cmd_handler_});
 }
 
-void PubSubController::RegisterPublishers() { SetupPublisher<queries::Form>(); }
+void PubSubController::RegisterPublishers() {
+  SetupPublisher<queries::Form>();
+  SetupPublisher<queries::Response>();
+  SetupPublisher<queries::FormResponses>();
+}
 
 bool PubSubController::IsConnectionActive() {
   // if a future is ready, that we have failed subscriber.
