@@ -21,6 +21,7 @@
 namespace eas::pubsub_controller {
 
 class PubSubController final {
+  static constexpr int kDefaultThreadNumber = 6;
  public:
   explicit PubSubController(
       std::unique_ptr<IConnFactory> conn_factory,
@@ -56,7 +57,7 @@ class PubSubController final {
   std::shared_ptr<commands::ICommandHandler> cmd_handler_;
 
   std::string app_name_ = "";
-  ThreadPool pubsub_thread_pool_ = ThreadPool(6);
+  ThreadPool pubsub_thread_pool_ = ThreadPool(kDefaultThreadNumber);
 
   std::vector<google::cloud::pubsub::Subscriber> subscribers_;
   std::vector<google::cloud::future<google::cloud::Status>>

@@ -14,9 +14,8 @@ PubSubController::PubSubController(
     : connection_factory_{std::move(conn_factory)},
       query_handler_{query_handler},
       cmd_handler_{cmd_handler},
-      pubsub_thread_pool_{ThreadPool(6)} {}
+      pubsub_thread_pool_{ThreadPool(kDefaultThreadNumber)} {}
 
-// 6 threads should be enough as simple initial implemetation.
 PubSubController::PubSubController(
     std::string app, std::unique_ptr<IConnFactory> conn_factory,
     std::shared_ptr<queries::IQueryHandler> query_handler,
@@ -25,7 +24,7 @@ PubSubController::PubSubController(
       query_handler_{query_handler},
       cmd_handler_{cmd_handler},
       app_name_{std::move(app)},
-      pubsub_thread_pool_{ThreadPool(6)} {}
+      pubsub_thread_pool_{ThreadPool(kDefaultThreadNumber)} {}
 
 void PubSubController::Start() {
   if (app_name_.empty()) throw std::runtime_error("app name is empty!");
@@ -71,7 +70,7 @@ void PubSubController::RegisterPublishers() {
 }
 
 bool PubSubController::IsConnectionActive() {
-  // if a future is ready, that we have failed subscriber.
+  // if a future is ready, than we have failed subscriber.
   return !std::any_of(subscriber_sessions_.begin(), subscriber_sessions_.end(),
                       [](auto const &status) { return status.is_ready(); });
 }
