@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include "commands/commands_handler.h"
+#include "glog/logging.h"
 #include "google/cloud/pubsub/ack_handler.h"
 #include "google/cloud/pubsub/message.h"
 #include "queries/queries.h"
@@ -12,43 +13,23 @@
 
 namespace eas::pubsub_controller {
 
+constexpr char kCreateSub[] = "eas_form_create";
+constexpr char kCreateResponseSub[] = "eas_response_create";
+constexpr char kGetFormSub[] = "eas_form_get";
+constexpr char kGetResponseSub[] = "eas_response_get";
+constexpr char kGetAllEventsResponses[] = "eas_form_responses_get";
+constexpr char kUpdateFormSub[] = "eas_form_update";
+constexpr char kDeleteFormSub[] = "eas_form_and_responses_delete";
+constexpr char kDeleteResponseSub[] = "eas_response_delete";
+constexpr char kDeleteAllResponsesSub[] = "eas_responses_user_delete";
+
 class PubSubController;
 
-// MARK: - Create subs
-
-class CreateFormSub final {
+template <typename QueryType>
+class QuerySub final {
  public:
-  static constexpr std::string_view topic = "eas_form_create";
-
-  explicit CreateFormSub(std::shared_ptr<commands::ICommandHandler> handler)
-      : handler_{handler} {}
-  void operator()(google::cloud::pubsub::Message const &msg,
-                  google::cloud::pubsub::AckHandler ack);
-
- private:
-  std::shared_ptr<commands::ICommandHandler> handler_;
-};
-
-class CreateResponseSub final {
- public:
-  static constexpr std::string_view topic = "eas_response_create";
-
-  explicit CreateResponseSub(std::shared_ptr<commands::ICommandHandler> handler)
-      : handler_{handler} {}
-  void operator()(google::cloud::pubsub::Message const &msg,
-                  google::cloud::pubsub::AckHandler ack);
-
- private:
-  std::shared_ptr<commands::ICommandHandler> handler_;
-};
-
-// MARK: - Get subs
-
-class GetFormSub final {
- public:
-  static constexpr std::string_view topic = "eas_form_get";
-  explicit GetFormSub(utils::non_owning<PubSubController *> controller,
-                      std::shared_ptr<queries::IQueryHandler> reader)
+  explicit QuerySub(utils::non_owning<PubSubController *> controller,
+                    std::shared_ptr<queries::IQueryHandler> reader)
       : controller_{controller}, reader_{reader} {}
   void operator()(google::cloud::pubsub::Message const &msg,
                   google::cloud::pubsub::AckHandler ack);
@@ -58,86 +39,10 @@ class GetFormSub final {
   std::shared_ptr<queries::IQueryHandler> reader_;
 };
 
-class GetResponseSub final {
+template <typename CommandType>
+class CommandSub final {
  public:
-  static constexpr std::string_view topic = "eas_response_get";
-
-  explicit GetResponseSub(utils::non_owning<PubSubController *> controller,
-                          std::shared_ptr<queries::IQueryHandler> reader)
-      : controller_{controller}, reader_{reader} {}
-  void operator()(google::cloud::pubsub::Message const &msg,
-                  google::cloud::pubsub::AckHandler ack);
-
- private:
-  utils::non_owning<PubSubController *> controller_;
-  std::shared_ptr<queries::IQueryHandler> reader_;
-};
-
-class GetAllEventResponses final {
- public:
-  static constexpr std::string_view topic = "eas_form_responses_get";
-  explicit GetAllEventResponses(
-      utils::non_owning<PubSubController *> controller,
-      std::shared_ptr<queries::IQueryHandler> reader)
-      : controller_{controller}, reader_{reader} {}
-  void operator()(google::cloud::pubsub::Message const &msg,
-                  google::cloud::pubsub::AckHandler ack);
-
- private:
-  utils::non_owning<PubSubController *> controller_;
-  std::shared_ptr<queries::IQueryHandler> reader_;
-};
-
-// MARK: - Update subs
-
-class UpdateFormSub final {
- public:
-  static constexpr std::string_view topic = "eas_form_update";
-
-  explicit UpdateFormSub(std::shared_ptr<commands::ICommandHandler> handler)
-      : handler_{handler} {}
-  void operator()(google::cloud::pubsub::Message const &msg,
-                  google::cloud::pubsub::AckHandler ack);
-
- private:
-  std::shared_ptr<commands::ICommandHandler> handler_;
-};
-
-// MARK: - Delete subs
-
-class DeleteFormAndResponsesSub final {
- public:
-  static constexpr std::string_view topic = "eas_form_and_responses_delete";
-
-  explicit DeleteFormAndResponsesSub(
-      std::shared_ptr<commands::ICommandHandler> handler)
-      : handler_{handler} {}
-  void operator()(google::cloud::pubsub::Message const &msg,
-                  google::cloud::pubsub::AckHandler ack);
-
- private:
-  std::shared_ptr<commands::ICommandHandler> handler_;
-};
-
-class DeleteResponseSub final {
- public:
-  static constexpr std::string_view topic = "eas_response_delete";
-
-  explicit DeleteResponseSub(std::shared_ptr<commands::ICommandHandler> handler)
-      : handler_{handler} {}
-  void operator()(google::cloud::pubsub::Message const &msg,
-                  google::cloud::pubsub::AckHandler ack);
-
- private:
-  std::shared_ptr<commands::ICommandHandler> handler_;
-};
-
-class DeleteAllUserResponsesSub final {
- public:
-  static constexpr std::string_view topic = "eas_responses_user_delete";
-
-  explicit DeleteAllUserResponsesSub(
-      std::shared_ptr<commands::ICommandHandler> handler)
+  explicit CommandSub(std::shared_ptr<commands::ICommandHandler> handler)
       : handler_{handler} {}
   void operator()(google::cloud::pubsub::Message const &msg,
                   google::cloud::pubsub::AckHandler ack);

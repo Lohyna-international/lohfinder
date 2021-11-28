@@ -2,16 +2,17 @@ cmake_minimum_required(VERSION 3.21)
 
 set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_C_COMPILER "clang")
+set(CMAKE_LINKER "/usr/bin/lld")
 
-set(CMAKE_TOOLCHAIN_FILE "/deps/vcpkg/scripts/buildsystems/vcpkg.cmake")
+set(CMAKE_TOOLCHAIN_FILE "/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 project(afs)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(google_cloud_cpp_pubsub REQUIRED)
-find_package(bsoncxx CONFIG REQUIRED)
-find_package(mongocxx CONFIG REQUIRED)
+# find_package(bsoncxx CONFIG REQUIRED)
+# find_package(mongocxx CONFIG REQUIRED)
 find_package(glog CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 
@@ -20,7 +21,6 @@ set(PUBSUB_CONTROLLER_SRCS
   src/pubsub_controller/connection_factory.h
   src/pubsub_controller/pubsub_controller.cc
   src/pubsub_controller/pubsub_controller.h
-  src/pubsub_controller/pubsub_subscribers.cc
   src/pubsub_controller/pubsub_subscribers.h
   src/pubsub_controller/pubsub_thread_pool.cc
   src/pubsub_controller/pubsub_thread_pool.h

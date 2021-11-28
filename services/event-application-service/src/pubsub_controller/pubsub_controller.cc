@@ -5,13 +5,6 @@
 namespace pubsub = ::google::cloud::pubsub;
 namespace cloud = ::google::cloud;
 
-struct FormQuery {
-  static constexpr std::string_view topic = "form_get";
-  std::string data;
-
-  std::string ToString() const { return data; }
-};
-
 namespace eas::pubsub_controller {
 
 PubSubController::PubSubController(
@@ -51,15 +44,24 @@ void PubSubController::Shutdown() {
 }
 
 void PubSubController::RegisterSubscribers() {
-  SetupSubscriber(CreateFormSub{cmd_handler_});
-  SetupSubscriber(UpdateFormSub{cmd_handler_});
-  SetupSubscriber(DeleteFormAndResponsesSub{cmd_handler_});
-  SetupSubscriber(GetFormSub{this, query_handler_});
-  SetupSubscriber(CreateResponseSub{cmd_handler_});
-  SetupSubscriber(DeleteResponseSub{cmd_handler_});
-  SetupSubscriber(GetResponseSub{this, query_handler_});
-  SetupSubscriber(GetAllEventResponses{this, query_handler_});
-  SetupSubscriber(DeleteAllUserResponsesSub{cmd_handler_});
+  SetupSubscriber<kCreateResponseSub>(
+      CommandSub<commands::CreateForm>{cmd_handler_});
+  SetupSubscriber<kCreateResponseSub>(
+      CommandSub<commands::CreateResponse>{cmd_handler_});
+  SetupSubscriber<kGetFormSub>(
+      QuerySub<queries::FormQuery>{this, query_handler_});
+  SetupSubscriber<kGetResponseSub>(
+      QuerySub<queries::UserResponseQuery>{this, query_handler_});
+  SetupSubscriber<kGetAllEventsResponses>(
+      QuerySub<queries::FormResponsesQuery>{this, query_handler_});
+  SetupSubscriber<kUpdateFormSub>(
+      CommandSub<commands::UpdateForm>{cmd_handler_});
+  SetupSubscriber<kDeleteFormSub>(
+      CommandSub<commands::DeleteFormAndResponses>{cmd_handler_});
+  SetupSubscriber<kDeleteResponseSub>(
+      CommandSub<commands::DeleteResponse>{cmd_handler_});
+  SetupSubscriber<kDeleteAllResponsesSub>(
+      CommandSub<commands::DeleteUserResponses>{cmd_handler_});
 }
 
 void PubSubController::RegisterPublishers() {

@@ -9,11 +9,13 @@
 #include <vector>
 
 #include "commands/commands_handler.h"
+#include "commands/domain.h"
 #include "google/cloud/pubsub/publisher.h"
 #include "google/cloud/pubsub/subscriber.h"
 #include "pubsub_controller/connection_factory.h"
 #include "pubsub_controller/pubsub_subscribers.h"
 #include "pubsub_controller/pubsub_thread_pool.h"
+#include "queries/domain.h"
 #include "queries/queries.h"
 
 namespace eas::pubsub_controller {
@@ -41,8 +43,8 @@ class PubSubController final {
   void RegisterSubscribers();
   void RegisterPublishers();
 
-  template <typename SubHandler>
-  void SetupSubscriber(SubHandler &&);
+  template <const char* topicName, typename SubHandler>
+  void SetupSubscriber(SubHandler&&);
 
   template <typename MessageType>
   void SetupPublisher();
@@ -72,6 +74,20 @@ void PubSubController::PublishResult(MessageObject obj) {
                   .Build());
 }
 
+template <const char* topicName, typename SubHandler>
+void PubSubController::SetupSubscriber(SubHandler&& item) {
+  namespace pubsub = google::cloud::pubsub;
+  namespace cloud = google::cloud;
+
+  auto sub = pubsub::Subscriber(connection_factory_->MakeSubscriberConnection(
+      pubsub::Subscription(app_name_, std::string(topicName)),
+      cloud::Options{}.set<cloud::GrpcCompletionQueueOption>(
+          pubsub_thread_pool_.cq())));
+
+  subscriber_sessions_.emplace_back(sub.Subscribe(item));
+  subscribers_.emplace_back(std::move(sub));
+}
+
 template <typename MessageType>
 void PubSubController::SetupPublisher() {
   namespace pubsub = google::cloud::pubsub;
@@ -85,18 +101,30 @@ void PubSubController::SetupPublisher() {
   publishers_.insert_or_assign(topic_name, std::move(pub));
 }
 
-template <typename SubHandler>
-void PubSubController::SetupSubscriber(SubHandler &&item) {
-  namespace pubsub = google::cloud::pubsub;
-  namespace cloud = google::cloud;
+}  // namespace eas::pubsub_controller
 
-  auto sub = pubsub::Subscriber(connection_factory_->MakeSubscriberConnection(
-      pubsub::Subscription(app_name_, std::string(SubHandler::topic)),
-      cloud::Options{}.set<cloud::GrpcCompletionQueueOption>(
-          pubsub_thread_pool_.cq())));
+namespace eas::pubsub_controller {
 
-  subscriber_sessions_.emplace_back(sub.Subscribe(item));
-  subscribers_.emplace_back(std::move(sub));
+template <typename QueryType>
+void QuerySub<QueryType>::operator()(google::cloud::pubsub::Message const& msg,
+                                     google::cloud::pubsub::AckHandler ack) {
+  // add simple validation.
+  LOG(INFO) << msg.data() << " " << msg;
+  auto query = QueryType{msg.data()};
+  std::move(ack).ack();
+  auto result = reader_->Execute(query);
+  controller_->PublishResult(result);
+}
+
+template <typename CommandType>
+void CommandSub<CommandType>::operator()(
+    google::cloud::pubsub::Message const& msg,
+    google::cloud::pubsub::AckHandler ack) {
+  // add simple validation.
+  LOG(INFO) << msg.data() << " " << msg;
+  auto cmd = CommandType{msg.data()};
+  std::move(ack).ack();
+  handler_->Handle(cmd);
 }
 
 }  // namespace eas::pubsub_controller
