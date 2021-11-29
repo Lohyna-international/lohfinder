@@ -18,6 +18,14 @@ def test_get_all_users():
     assert count_of_users == len(database_manager.get_all_users())
 
 
+def test_get_user_by_id():
+    pass
+
+
+def test_get_user_by_email():
+    pass
+
+
 def test_delete_user_by_email():
     print("Running test test_delete_user_by_email")
     user = mocker.get_mocked_users()[0]
