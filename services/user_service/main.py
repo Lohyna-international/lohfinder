@@ -1,8 +1,7 @@
-from pubsub import PubSubManager
-from callbacks import pubsub_manager
 import threading
 import callbacks
 
+from constants import pubsub_manager
 
 subs = {
     "users_get-sub" : callbacks.get_users_callback,
@@ -16,7 +15,5 @@ subs = {
 }
 
 if __name__ == "__main__":
-    pubsub = PubSubManager("projects/lohfinder-app/subscriptions/", "lohfinder-app")
     for i in subs:
-        threading.Thread(target=pubsub.subscribe, args=[i, subs[i]]).start()
-        
+        threading.Thread(target=pubsub_manager.subscribe, args=[i, subs[i]]).start()

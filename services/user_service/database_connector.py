@@ -3,6 +3,7 @@ from firebase_admin.exceptions import FirebaseError
 from firebase_admin import credentials
 from firebase_admin import db
 
+#TODO: add returns for methods like save/update
 
 class DatabaseAdmin:
 

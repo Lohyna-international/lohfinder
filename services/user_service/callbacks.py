@@ -1,22 +1,13 @@
-from pubsub import PubSubManager
-from database_connector import DatabaseAdmin
+from constants import database_admin, pubsub_manager, RESULT_TOPIC
 import json
 
-
-pubsub_manager = PubSubManager("projects/lohfinder-app/subscriptions/", "lohfinder-app")
-databaseURL = "https://lohyna-user-service-default-rtdb.firebaseio.com/"
-credentials_path = "firebase.json"
-database_admin = DatabaseAdmin(databaseURL, credentials_path)
-
-
-
-RESULT_TOPIC = "user_service_result"
 
 def ack_message(message):
     print(f"Received message : {message}")
     print(f"Data : {message.data}")
     message.ack()
     return message.attributes["message_id"]
+
 
 def get_users_callback(message):
     message_id = ack_message(message)
