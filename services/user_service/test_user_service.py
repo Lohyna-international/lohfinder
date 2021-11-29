@@ -19,11 +19,22 @@ def test_get_all_users():
 
 
 def test_get_user_by_id():
-    pass
+    print("Running test test_get_user_by_id")
+    user = mocker.get_mocked_users()[0]
+    print("STEP 1: User was not in the database before")
+    assert database_manager.get_user_by_email(user["email"]) == list()
+    user_id = database_manager.save_user(user)
+    print("STEP 2: Check whether user is the same")
+    assert database_manager.get_user_by_id(user_id)["email"] == user["email"]
 
 
 def test_get_user_by_email():
-    pass
+    print("Running test get_user_by_email")
+    user = mocker.get_mocked_users()[0]
+    print("STEP 1: User was not in the database before")
+    assert database_manager.get_user_by_email(user["email"]) == list()
+    user_id = database_manager.save_user(user)
+    assert database_manager.get_user_by_email(user["email"])["email"] == user["email"]
 
 
 def test_delete_user_by_email():
