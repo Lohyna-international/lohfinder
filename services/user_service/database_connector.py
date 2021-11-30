@@ -3,16 +3,18 @@ from firebase_admin.exceptions import FirebaseError
 from firebase_admin import credentials
 from firebase_admin import db
 
-#TODO: add returns for methods like save/update
+# TODO: add returns for methods like save/update
+
 
 class DatabaseAdmin:
-
     def __init__(self, databaseURL, credentials_path):
         cred = credentials.Certificate(credentials_path)
-        firebase_admin.initialize_app(cred,
-        {
-            'databaseURL' : databaseURL,
-        })
+        firebase_admin.initialize_app(
+            cred,
+            {
+                "databaseURL": databaseURL,
+            },
+        )
         self.__users_ref = db.reference("users")
 
     def get_all_users(self):
@@ -23,7 +25,6 @@ class DatabaseAdmin:
         except FirebaseError as e:
             print("###Connection lost. EROR received : " + str(e))
             return list()
-    
 
     def get_user_by_id(self, id):
         try:
@@ -36,11 +37,10 @@ class DatabaseAdmin:
             print("###Connection lost. EROR received : " + str(e))
         return list()
 
-
     def get_user_by_email(self, email):
-        try:   
+        try:
             for user_id in self.get_user_ids():
-                if email == self.__users_ref.child(user_id).child("email").get():          
+                if email == self.__users_ref.child(user_id).child("email").get():
                     return self.__users_ref.child(user_id).get()
         except ValueError as e:
             print("###EROR received : " + str(e))
@@ -58,7 +58,6 @@ class DatabaseAdmin:
             print("###Connection lost. EROR received : " + str(e))
         return list()
 
-
     def save_user(self, user_info):
         try:
             return self.__users_ref.push(user_info).key
@@ -69,7 +68,6 @@ class DatabaseAdmin:
         except FirebaseError as e:
             print("###Connection lost. EROR received : " + str(e))
 
-    
     def update_user(self, user_id, user_info):
         try:
             self.__users_ref.child(user_id).set(user_info)
@@ -79,7 +77,6 @@ class DatabaseAdmin:
             print("###EROR received : " + str(e))
         except FirebaseError as e:
             print("###Connection lost. EROR received : " + str(e))
-    
 
     def delete_user_by_id(self, user_id):
         try:
@@ -88,7 +85,6 @@ class DatabaseAdmin:
             print("###EROR received : " + str(e))
         except FirebaseError as e:
             print("###Connection lost. EROR received : " + str(e))
-
 
     def delete_user_by_email(self, email):
         try:
@@ -99,7 +95,6 @@ class DatabaseAdmin:
             print("###EROR received : " + str(e))
         except FirebaseError as e:
             print("###Connection lost. EROR received : " + str(e))
-
 
     def drop_users(self):
         try:

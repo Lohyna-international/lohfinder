@@ -1,4 +1,3 @@
-
 from database_connector import DatabaseAdmin
 import mocker
 
@@ -14,7 +13,9 @@ def test_get_all_users():
     count_of_users = 3
     for i in mocker.get_mocked_users(count_of_users):
         database_manager.save_user(i)
-    print(f"STEP 1: count of the users after clearing table should be equal to COUNT_OF_USERS = {count_of_users}")
+    print(
+        f"STEP 1: count of the users after clearing table should be equal to COUNT_OF_USERS = {count_of_users}"
+    )
     assert count_of_users == len(database_manager.get_all_users())
 
 
@@ -93,7 +94,7 @@ def test_drop_users():
     users = mocker.get_mocked_users(count_of_users)
     print("STEP 1: Database contains users")
     assert database_manager.get_all_users() != []
-    for i in users: 
+    for i in users:
         database_manager.save_user(i)
     database_manager.drop_users()
     print(f"STEP 2: After populating {count_of_users} database is cleared")

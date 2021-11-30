@@ -36,9 +36,9 @@ def save_user_callback(message):
     message_id = ack_message(message)
     user = json.loads(message.data)
     result = database_admin.save_user(user)
-    response = json.dumps({"user_id" : result})
+    response = json.dumps({"user_id": result})
     pubsub_manager.publish(RESULT_TOPIC, response, message_id)
-    
+
 
 def update_user_callback(message):
     ack_message(message)
