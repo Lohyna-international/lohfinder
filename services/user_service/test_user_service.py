@@ -23,7 +23,7 @@ def test_get_user_by_id():
     print("Running test test_get_user_by_id")
     user = mocker.get_mocked_users()[0]
     print("STEP 1: User was not in the database before")
-    assert database_manager.get_user_by_email(user["email"]) == list()
+    assert database_manager.get_user_by_email(user["email"]) == None
     user_id = database_manager.save_user(user)
     print("STEP 2: Check whether user is the same")
     assert database_manager.get_user_by_id(user_id)["email"] == user["email"]
@@ -33,7 +33,7 @@ def test_get_user_by_email():
     print("Running test get_user_by_email")
     user = mocker.get_mocked_users()[0]
     print("STEP 1: User was not in the database before")
-    assert database_manager.get_user_by_email(user["email"]) == list()
+    assert database_manager.get_user_by_email(user["email"]) == None
     user_id = database_manager.save_user(user)
     assert database_manager.get_user_by_email(user["email"])["email"] == user["email"]
 
@@ -47,7 +47,7 @@ def test_delete_user_by_email():
     assert database_manager.get_user_by_email(user_email)["email"] == user_email
     database_manager.delete_user_by_email(user_email)
     print("STEP 2: After deleting by email user is not more stored")
-    assert database_manager.get_user_by_email(user_email) == []
+    assert database_manager.get_user_by_email(user_email) == None
 
 
 def test_delete_user_by_id():
@@ -55,10 +55,10 @@ def test_delete_user_by_id():
     user = mocker.get_mocked_users()[0]
     user_id = database_manager.save_user(user)
     print("STEP 1: User has been saved into database")
-    assert database_manager.get_user_by_id(user_id) != []
+    assert database_manager.get_user_by_id(user_id) != None
     database_manager.delete_user_by_id(user_id)
     print("STEP 2: User has been deleted from database")
-    assert database_manager.get_user_by_id(user_id) == []
+    assert database_manager.get_user_by_id(user_id) == None
 
 
 def test_create_user():
@@ -84,7 +84,7 @@ def test_update_user():
     assert updated_user["age"] == 100
     print("STEP 2: User email has been changed")
     assert updated_user["email"] == "test@gmail.com"
-    print("STEP 4: User interests has been changed")
+    print("STEP 4: User interests have been changed")
     assert "one more thing" in updated_user["interests"]
 
 
@@ -92,10 +92,8 @@ def test_drop_users():
     print("Running test test_drop_users")
     count_of_users = 10
     users = mocker.get_mocked_users(count_of_users)
-    print("STEP 1: Database contains users")
-    assert database_manager.get_all_users() != []
     for i in users:
         database_manager.save_user(i)
     database_manager.drop_users()
-    print(f"STEP 2: After populating {count_of_users} database is cleared")
+    print(f"STEP 1: After populating {count_of_users} database is cleared")
     assert database_manager.get_all_users() == []
