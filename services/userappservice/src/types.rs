@@ -1,24 +1,22 @@
-use serde::{Deserialize, Serialize};
-use cloud_pubsub::*;
 use super::*;
+use cloud_pubsub::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize,Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub enum ApplicationStatus {
     Created,
     Registered,
     Approved,
     Rejected,
-    Postponed
+    Postponed,
 }
-
-
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct Application {
-    pub id : u64,
+    pub id: u64,
     pub user_id: u64,
     pub event_id: u64,
-    pub status : ApplicationStatus
+    pub status: ApplicationStatus,
 }
 
 impl Application {
@@ -36,23 +34,23 @@ impl Application {
         }
     }
 
-    pub fn set_status(&mut self, status : ApplicationStatus) {
+    pub fn set_status(&mut self, status: ApplicationStatus) {
         self.status = status;
     }
 }
 
-fn format_string(inp : &str) -> String {
+fn format_string(inp: &str) -> String {
     serde_json::from_str::<String>(inp).unwrap()
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Message {
-    pub data : String
+    pub data: String,
 }
 
 impl Message {
-    pub fn new(data : String) -> Message{
-        Message {data}
+    pub fn new(data: String) -> Message {
+        Message { data }
     }
 }
 
@@ -95,7 +93,9 @@ impl Status {
 impl FromPubSubMessage for Status {
     fn from(message: EncodedMessage) -> Result<Self, error::Error> {
         match message.decode() {
-            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(&String::from_utf8(bytes).unwrap())) {
+            Ok(bytes) => match serde_json::from_str::<Self>(&format_string(
+                &String::from_utf8(bytes).unwrap(),
+            )) {
                 Ok(m) => Ok(m),
                 Err(e) => Err(error::Error::from(e)),
             },
@@ -124,20 +124,23 @@ pub trait PubSubCallBack {
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateAppMessage {
-    pub message_id : u64,
-    pub id : Option<u64>,
-    pub user_id : u64,
-    pub event_id : u64,
+    pub message_id: u64,
+    pub id: Option<u64>,
+    pub user_id: u64,
+    pub event_id: u64,
 }
 
 impl PubSubCallBack for CreateAppMessage {
-    fn action(&self, manager: &data_manager::EventManager) -> Result<Status, Box<dyn std::error::Error>> {
+    fn action(
+        &self,
+        manager: &data_manager::EventManager,
+    ) -> Result<Status, Box<dyn std::error::Error>> {
         let id = self.id.unwrap_or(manager.generate_id());
         let app = Application {
-            id : id,
-            user_id : self.user_id,
-            event_id : self.event_id,
-            status : ApplicationStatus::Created
+            id: id,
+            user_id: self.user_id,
+            event_id: self.event_id,
+            status: ApplicationStatus::Created,
         };
         manager.create_app(&app)?;
         Ok(Status::ok(self.message_id))
@@ -154,13 +157,16 @@ impl PubSubCallBack for CreateAppMessage {
 
 #[derive(Serialize, Deserialize)]
 pub struct UpdateStatusMessage {
-    pub message_id : u64,
-    pub id : u64,
-    pub status : ApplicationStatus,
+    pub message_id: u64,
+    pub id: u64,
+    pub status: ApplicationStatus,
 }
 
 impl PubSubCallBack for UpdateStatusMessage {
-    fn action(&self, manager: &data_manager::EventManager) -> Result<Status, Box<dyn std::error::Error>> {
+    fn action(
+        &self,
+        manager: &data_manager::EventManager,
+    ) -> Result<Status, Box<dyn std::error::Error>> {
         manager.update_status(self.id, self.status.clone())?;
         Ok(Status::ok(self.message_id))
     }
@@ -177,29 +183,36 @@ impl PubSubCallBack for UpdateStatusMessage {
 #[derive(Serialize, Deserialize)]
 pub enum GetFor {
     User,
-    Event
+    Event,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct GetAppsMessage {
-    pub message_id : u64,
-    pub id : u64,
-    pub get_for : GetFor,
+    pub message_id: u64,
+    pub id: u64,
+    pub get_for: GetFor,
 }
 
 #[derive(Serialize, Deserialize)]
 struct AppsList {
-    apps : Vec<Application>
+    apps: Vec<Application>,
 }
 
 impl PubSubCallBack for GetAppsMessage {
-    fn action(&self, manager: &data_manager::EventManager) -> Result<Status, Box<dyn std::error::Error>> {
+    fn action(
+        &self,
+        manager: &data_manager::EventManager,
+    ) -> Result<Status, Box<dyn std::error::Error>> {
         let apps = match self.get_for {
             GetFor::User => manager.get_for_user(self.id),
             GetFor::Event => manager.get_for_event(self.id),
         }?;
-        let applist = AppsList {apps};
-        Ok(Status::new(self.message_id, 200, serde_json::to_string(&applist)?))
+        let applist = AppsList { apps };
+        Ok(Status::new(
+            self.message_id,
+            200,
+            serde_json::to_string(&applist)?,
+        ))
     }
 
     fn error_message(&self, error: Box<dyn std::error::Error>) -> String {

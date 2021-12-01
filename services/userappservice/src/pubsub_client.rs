@@ -17,11 +17,7 @@ impl PubSubClient {
         manager: EventManager,
     ) -> Result<PubSubClient, Box<dyn std::error::Error>> {
         let client = Client::new(keys).await?;
-        let topics_names = vec![
-            "app_create",
-            "app_update",
-            "app_get"
-        ];
+        let topics_names = vec!["app_create", "app_update", "app_get"];
         let mut topics = HashMap::new();
         let mut subs = HashMap::new();
         topics_names.iter().map(|f| f.to_string()).for_each(|f| {
