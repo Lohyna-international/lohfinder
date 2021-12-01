@@ -5,7 +5,6 @@ use pubsub_client::PubSubClient;
 mod data_manager;
 mod pubsub_client;
 mod types;
-mod pstypes;
 
 #[tokio::main]
 async fn main() {
@@ -29,10 +28,8 @@ async fn main() {
 #[cfg(test)]
 mod tests;
 
-#[cfg(test)]
-mod pubsub_tests;
-
 #[test]
+#[ignore]
 fn clean_tests() {
     assert!(std::fs::remove_dir_all("./test").is_ok());
 }

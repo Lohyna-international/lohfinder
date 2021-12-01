@@ -1,7 +1,7 @@
 use super::types::*;
 use sled;
 
-pub fn merge(key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> {
+pub fn merge(_key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> {
     let mut old_vec = match old_v {
         Some(v) => v.to_vec(),
         None => Vec::new(),
@@ -62,7 +62,7 @@ impl EventManager {
                 "Application already created",
             )));
         }
-        apps.insert(&id, new_app.to_json()?.as_bytes());
+        apps.insert(&id, new_app.to_json()?.as_bytes())?;
         let users = self.db.open_tree(&self.users_apps)?;
         let events = self.db.open_tree(&self.events_apps)?;
         if users.contains_key(&user_id)? {
@@ -75,7 +75,7 @@ impl EventManager {
         } else {
             events.insert(event_id, id.to_vec())?;
         }
-        Ok(())
+        self.update_status(new_app.id, ApplicationStatus::Created)
     }
 
     pub fn update_status(

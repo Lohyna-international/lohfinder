@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use cloud_pubsub::*;
 use super::*;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize,Debug, PartialEq, Eq, Clone)]
 pub enum ApplicationStatus {
     Created,
     Registered,
@@ -161,7 +161,7 @@ pub struct UpdateStatusMessage {
 
 impl PubSubCallBack for UpdateStatusMessage {
     fn action(&self, manager: &data_manager::EventManager) -> Result<Status, Box<dyn std::error::Error>> {
-        manager.update_status(self.id, self.status)?;
+        manager.update_status(self.id, self.status.clone())?;
         Ok(Status::ok(self.message_id))
     }
 
@@ -175,7 +175,7 @@ impl PubSubCallBack for UpdateStatusMessage {
 }
 
 #[derive(Serialize, Deserialize)]
-enum GetFor {
+pub enum GetFor {
     User,
     Event
 }
