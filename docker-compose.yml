@@ -1,6 +1,14 @@
-version: '3.3'
-
+# This is a development compose file.
+version: "3.8"
 services:
+  event-application-service:
+    container_name: docker_event_application_service
+    build: 
+      context: services/event-application-service
+    volumes:
+      - ~/.config/:/root/.config
+    environment:
+      - APP_NAME=lohfinder-app
   api_service:
     build: ./services/api_service
     command: python3 manage.py runserver 0.0.0.0:8000
@@ -10,3 +18,4 @@ services:
       - 8000:8000
     env_file:
       - ./services/api_service/.env.dev
+

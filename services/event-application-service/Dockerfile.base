@@ -1,0 +1,21 @@
+FROM ubuntu:20.04
+
+RUN apt update
+
+ENV TZ=Europe/Kiev
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get install locales -y
+RUN locale-gen en_GB.UTF-8
+ENV LANG en_GB.UTF-8
+ENV LANGUAGE en_GB.UTF-8
+ENV LC_ALL en_GB.UTF-8
+
+RUN apt install -y git build-essential curl clang-format clang-tidy clang-tools
+RUN apt install -y clang clangd libc++-dev libc++1 libc++abi-dev libc++abi1 unzip
+RUN apt install -y libclang-dev libclang1 liblldb-dev libllvm-ocaml-dev zip pkg-config
+RUN apt install -y libomp-dev libomp5 lld lldb llvm-dev llvm-runtime llvm tar
+RUN git clone https://github.com/Microsoft/vcpkg.git
+RUN ./vcpkg/bootstrap-vcpkg.sh
+RUN ln -s /vcpkg/downloads/tools/cmake-3.21.1-linux/cmake-3.21.1-linux-x86_64/bin/cmake /usr/sbin/cmake
+RUN /vcpkg/vcpkg install google-cloud-cpp[core,pubsub] gtest glog
