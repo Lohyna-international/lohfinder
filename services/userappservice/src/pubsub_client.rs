@@ -100,34 +100,41 @@ impl PubSubClient {
         &self,
         messages: Vec<(Result<Message, error::Error>, String)>,
         name: String,
-    ) -> impl future::TryFuture<
-        Ok = (Vec<Status>, Vec<String>, String),
-        Error = cloud_pubsub::error::Error,
-    > {
+    ) -> Result<(Vec<Status>, Vec<String>, String), cloud_pubsub::error::Error> {
         let ids: Vec<String> = messages.iter().map(|v| v.1.clone()).collect();
         let values: Vec<Message> = messages.into_iter().filter_map(|v| v.0.ok()).collect();
         let statuses: Vec<Status> = match self.parse_message_type(values, &name) {
             Ok(items) => items.iter().map(|v| v.handle(&self.manager)).collect(),
-            Err(e) => return future::err(cloud_pubsub::error::Error::IO(e)),
+            Err(e) => return Err(cloud_pubsub::error::Error::IO(e)),
         };
-        future::ok((statuses, ids, name))
+        Ok((statuses, ids, name))
     }
 
     pub async fn handle_messages(&self) -> Result<Vec<Status>, Box<dyn std::error::Error>> {
         let mut all_statuses = Vec::new();
         let mut futures = Vec::new();
         let mut ackns = Vec::new();
-        for (name, sub) in &self.subs {
-            let n = name.clone();
-            futures.push(
-                sub.get_messages::<Message>()
-                    .and_then(|msgs| self.work_messages(msgs, n)),
-            );
+        for (_, sub) in &self.subs {
+            futures.push(tokio::time::timeout(
+                tokio::time::Duration::from_secs(3),
+                sub.get_messages::<Message>(),
+            ));
         }
-        let r: Vec<Result<(Vec<Status>, Vec<String>, String), cloud_pubsub::error::Error>> =
-            futures::future::join_all(futures).await;
+        let r: Vec<(Vec<(Result<Message, error::Error>, String)>, String)> =
+            futures::future::join_all(futures)
+                .await
+                .into_iter()
+                .zip(self.subs.keys())
+                .filter_map(|(f, n)| match f {
+                    Ok(v) => match v {
+                        Ok(v) => Some((v, n.clone())),
+                        Err(_) => None,
+                    },
+                    Err(_) => None,
+                })
+                .collect();
         r.into_iter()
-            .filter_map(|v| v.ok())
+            .filter_map(|(v, n)| self.work_messages(v, n).ok())
             .for_each(|(mut s, ids, name)| {
                 all_statuses.append(&mut s);
                 ackns.push(self.acknowledge(ids, name));
