@@ -23,7 +23,7 @@ def test_get_user_by_id():
     print("Running test test_get_user_by_id")
     user = mocker.get_mocked_users()[0]
     print("STEP 1: User was not in the database before")
-    assert database_manager.get_user_by_email(user["email"]) == None
+    assert database_manager.get_user_by_email(user["email"]) is None
     user_id = database_manager.save_user(user)
     print("STEP 2: Check whether user is the same")
     assert database_manager.get_user_by_id(user_id)["email"] == user["email"]
@@ -33,7 +33,7 @@ def test_get_user_by_email():
     print("Running test get_user_by_email")
     user = mocker.get_mocked_users()[0]
     print("STEP 1: User was not in the database before")
-    assert database_manager.get_user_by_email(user["email"]) == None
+    assert database_manager.get_user_by_email(user["email"]) is None
     user_id = database_manager.save_user(user)
     assert database_manager.get_user_by_email(user["email"])["email"] == user["email"]
 
@@ -47,7 +47,7 @@ def test_delete_user_by_email():
     assert database_manager.get_user_by_email(user_email)["email"] == user_email
     database_manager.delete_user_by_email(user_email)
     print("STEP 2: After deleting by email user is not more stored")
-    assert database_manager.get_user_by_email(user_email) == None
+    assert database_manager.get_user_by_email(user_email) is None
 
 
 def test_delete_user_by_id():
@@ -55,10 +55,10 @@ def test_delete_user_by_id():
     user = mocker.get_mocked_users()[0]
     user_id = database_manager.save_user(user)
     print("STEP 1: User has been saved into database")
-    assert database_manager.get_user_by_id(user_id) != None
+    assert database_manager.get_user_by_id(user_id) is not None
     database_manager.delete_user_by_id(user_id)
     print("STEP 2: User has been deleted from database")
-    assert database_manager.get_user_by_id(user_id) == None
+    assert database_manager.get_user_by_id(user_id) is None
 
 
 def test_create_user():
@@ -66,7 +66,7 @@ def test_create_user():
     user = mocker.get_mocked_users()[0]
     id = database_manager.save_user(user)
     print("STEP 1: User has been saved into database")
-    assert database_manager.get_user_by_id(id) != None
+    assert database_manager.get_user_by_id(id) is not None
 
 
 def test_update_user():
@@ -74,7 +74,7 @@ def test_update_user():
     user = mocker.get_mocked_users()[0]
     id = database_manager.save_user(user)
     print("STEP 1: User has been saved into database")
-    assert database_manager.get_user_by_id(id) != None
+    assert database_manager.get_user_by_id(id) is not None
     user["age"] = 100
     user["email"] = "test@gmail.com"
     user["interests"].append("one more thing")
