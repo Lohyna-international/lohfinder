@@ -4,7 +4,6 @@ import json
 
 def ack_message(message):
     print(f"Received message : {message}")
-    print(f"Data : {message.data}")
     message.ack()
     return message.attributes["message_id"]
 
@@ -12,59 +11,65 @@ def ack_message(message):
 def get_users_callback(message):
     message_id = ack_message(message)
     users = database_admin.get_all_users()
-    response = "There are no users" if len(users) == 0 else json.dumps(users)
+    response = json.dumps({"status_code":404, "result": {}}) if len(users) == 0 else json.dumps({"status_code" : 200, "result":users})
     pubsub_manager.publish(RESULT_TOPIC, response, message_id)
 
 
 def get_user_by_id_callback(message):
     message_id = ack_message(message)
-    user_id = json.loads(message.data)["user_id"]
+    user_id = message.attributes["user_id"]
     user = database_admin.get_user_by_id(user_id)
-    response = json.dumps(user) if user is not None else "User is not found"
+    response = json.dumps({"status_code":200, "result": user}) if user is not None else json.dumps({"status_code":404, "result": {}})
+    print(response)
     pubsub_manager.publish(RESULT_TOPIC, response, message_id)
 
 
 def get_user_by_email_callback(message):
     message_id = ack_message(message)
-    email = json.loads(message.data)["email"]
+    email = message.attributes["email"]
+    print("Received an email" + str(email))
     user = database_admin.get_user_by_email(email)
-    response = json.dumps(user) if user is not None else "User is not found"
+    response = json.dumps({"status_code":200, "result": user}) if user is not None else json.dumps({"status_code":404, "result": {}})
+    print(response)
     pubsub_manager.publish(RESULT_TOPIC, response, message_id)
 
 
 def save_user_callback(message):
     message_id = ack_message(message)
-    user = json.loads(message.data)
+    user = json.loads(message.data.decode("utf-8"))
     result = database_admin.save_user(user)
-    response = json.dumps({"user_id": result}) if user is not None else "Can not save user"
+    response = json.dumps({"status_code":200, "result":result }) if result is not None else json.dumps({"status_code":404, "result": {}})
+    print(response)
     pubsub_manager.publish(RESULT_TOPIC, response, message_id)
 
 
 def update_user_callback(message):
     message_id = ack_message(message)
-    user = json.loads(message.data)
-    result = database_admin.update_user(user["id"], user)
-    response = "User is updated" if result else "User is not updated"
+    user = json.loads(message.data.decode("utf-8"))
+    user_id = message.attributes["user_id"]
+    result = database_admin.update_user(user_id, user)
+    response = json.dumps({"status_code":200, "result":result }) if result else json.dumps({"status_code":404, "result": {}})
     pubsub_manager.publish(RESULT_TOPIC, response, message_id)
+
 
 def delete_user_by_id_callback(message):
     message_id = ack_message(message)
-    user_id = json.loads(message.data)["id"]
+    user_id = message.attributes["user_id"]
     result = database_admin.delete_user_by_id(user_id)
-    response = "User is deleted" if result else "User is not deleted"
+    response = json.dumps({"status_code":200, "result":result }) if result else json.dumps({"status_code":404, "result": {}})
     pubsub_manager.publish(RESULT_TOPIC, response, message_id)
 
 
 def delete_user_by_email_callback(message):
     message_id = ack_message(message)
-    email = json.loads(message.data)["email"]
+    email = message.attributes["email"]
     result = database_admin.delete_user_by_email(email)
-    response = "User is deleted" if result else "User is not deleted"
+    response = json.dumps({"status_code":200, "result":result }) if result else json.dumps({"status_code":404, "result": {}})
     pubsub_manager.publish(RESULT_TOPIC, response, message_id)
 
 
 def drop_users_callback(message):
     message_id = ack_message(message)
     result = database_admin.drop_users()
-    response = "User are deleted" if result else "Users are not deleted"
+    response = json.dumps({"status_code":200, "result":result }) if result else json.dumps({"status_code":404, "result": {}})
     pubsub_manager.publish(RESULT_TOPIC, response, message_id)

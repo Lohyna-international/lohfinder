@@ -1,7 +1,7 @@
 from database_connector import DatabaseAdmin
 from pubsub import PubSubManager
 
-DATABASE_URL = "https://lohyna-user-service-default-rtdb.firebaseio.com/"
+DATABASE_URL = "https://lohfinder-app-default-rtdb.firebaseio.com/"
 FIREBASE_KEYS = "firebase.json"
 database_admin = DatabaseAdmin(DATABASE_URL, FIREBASE_KEYS)
 
