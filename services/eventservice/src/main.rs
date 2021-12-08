@@ -15,7 +15,7 @@ async fn main() {
     let client = PubSubClient::new(keys.to_string(), manager).await.expect("Failed to initialize pubsub");
     println!("Init finished without errors!!!");
     loop {
-        match client.handle_messages().await {
+        match client.handle_messages(1).await {
             Ok(status) => match client.return_results(status).await {
                 Ok(0) => println!("All statuses successfully sent!"),
                 Ok(n) => println!("Failed to send {} statuses", n),

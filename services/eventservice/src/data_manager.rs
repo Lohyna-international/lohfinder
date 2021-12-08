@@ -2,7 +2,7 @@ use super::types::*;
 use sled;
 use std::collections::HashSet;
 
-pub fn merge(key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> {
+pub fn merge(_key: &[u8], old_v: Option<&[u8]>, new_v: &[u8]) -> Option<Vec<u8>> {
     let mut old_vec = match old_v {
         Some(v) => v.to_vec(),
         None => Vec::new(),

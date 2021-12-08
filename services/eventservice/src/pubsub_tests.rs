@@ -106,7 +106,7 @@ fn create_event_pubsub_test() {
         .publish(serde_json::to_string(&create_cat_message).expect("Failed to serialize message")))
     .expect("Failed to send message");
     let time = chrono::Utc::now();
-    let res = aw!(work_client.handle_messages()).expect("Failed to handle messages");
+    let res = aw!(work_client.handle_messages(20)).expect("Failed to handle messages");
     println!(
         "Seconds to pull all messages : {}",
         (chrono::Utc::now() - time).num_seconds()
@@ -121,12 +121,11 @@ fn create_event_pubsub_test() {
         .expect("Failed to send message");
     aw!(topic.publish(serde_json::to_string(&message2).expect("Failed to serialize message")))
         .expect("Failed to send message");
-    let res = aw!(work_client.handle_messages()).expect("Failed to handle messages");
+    let res = aw!(work_client.handle_messages(20)).expect("Failed to handle messages");
     assert!(res
         .iter()
         .inspect(|f| println!("{:?}", f))
         .any(|f| f.id == 11 && f.code == 200));
-    assert!(res.iter().any(|f| f.id == 12 && f.code == 200));
     aw!(work_client.return_results(res)).expect("Failed to return results");
     work_client.clean_db();
 }
