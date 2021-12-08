@@ -1,7 +1,7 @@
 use super::types::*;
 use crate::data_manager::EventManager;
 use cloud_pubsub::*;
-use futures::{self, future, TryFutureExt};
+use futures;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -110,13 +110,13 @@ impl PubSubClient {
         Ok((statuses, ids, name))
     }
 
-    pub async fn handle_messages(&self) -> Result<Vec<Status>, Box<dyn std::error::Error>> {
+    pub async fn handle_messages(&self, timeout : u8) -> Result<Vec<Status>, Box<dyn std::error::Error>> {
         let mut all_statuses = Vec::new();
         let mut futures = Vec::new();
         let mut ackns = Vec::new();
         for (_, sub) in &self.subs {
             futures.push(tokio::time::timeout(
-                tokio::time::Duration::from_secs(3),
+                tokio::time::Duration::from_secs(timeout.into()),
                 sub.get_messages::<Message>(),
             ));
         }
