@@ -1,4 +1,4 @@
-use crate::types::{Category, Event};
+use crate::types::{*};
 
 use super::*;
 
@@ -86,14 +86,14 @@ fn delete_event_test() {
         .create_event(&event2)
         .expect("Failed to create event");
     let events = manager
-        .get_events(Some(&data_manager::EventSortKey::Title), None, None)
+        .get_events(Some(&EventSortKey::Title), None, None)
         .expect("Failed to get events");
     assert_eq!(events, vec![event1.clone(), event2.clone()]);
     manager
         .delete_event(&event1.id)
         .expect("Failed to delete event");
     let events = manager
-        .get_events(Some(&data_manager::EventSortKey::Title), None, None)
+        .get_events(Some(&EventSortKey::Title), None, None)
         .expect("Failed to get events");
     assert_eq!(events, vec![event2.clone()]);
     assert!(manager.delete_event(&event2.id).is_ok());
@@ -167,31 +167,31 @@ fn get_events_test() {
         .expect("Failed to create event");
     assert_eq!(
         manager
-            .get_events(Some(&data_manager::EventSortKey::Title), None, None)
+            .get_events(Some(&EventSortKey::Title), None, None)
             .unwrap(),
         vec![event1.clone(), event2.clone(), event3.clone()]
     );
     assert_eq!(
         manager
-            .get_events(Some(&data_manager::EventSortKey::Planning), None, None)
+            .get_events(Some(&EventSortKey::Planning), None, None)
             .unwrap(),
         vec![event3.clone(), event2.clone(), event1.clone()]
     );
     assert_eq!(
         manager
-            .get_events(Some(&data_manager::EventSortKey::Title), Some(1), None)
+            .get_events(Some(&EventSortKey::Title), Some(1), None)
             .unwrap(),
         vec![event2.clone()]
     );
     assert_eq!(
         manager
-            .get_events(Some(&data_manager::EventSortKey::Title), None, Some(&cat2))
+            .get_events(Some(&EventSortKey::Title), None, Some(&cat2))
             .unwrap(),
         vec![event2.clone()]
     );
     assert_eq!(
         manager
-            .get_events(Some(&data_manager::EventSortKey::Title), Some(2), Some(&cat1))
+            .get_events(Some(&EventSortKey::Title), Some(2), Some(&cat1))
             .unwrap(),
         vec![event3.clone()]
     );
@@ -245,13 +245,13 @@ fn merge_categories_test() {
         .expect("Failed to create event");
     assert_eq!(
         manager
-            .get_events(Some(&data_manager::EventSortKey::Title), None, Some(&cat2))
+            .get_events(Some(&EventSortKey::Title), None, Some(&cat2))
             .unwrap(),
         vec![event2.clone()]
     );
     assert_eq!(
         manager
-            .get_events(Some(&data_manager::EventSortKey::Title), None, Some(&cat1))
+            .get_events(Some(&EventSortKey::Title), None, Some(&cat1))
             .unwrap(),
         vec![event1.clone(), event3.clone()]
     );
@@ -260,7 +260,7 @@ fn merge_categories_test() {
         .expect("Failed to merge");
     assert_eq!(
         manager
-            .get_events(Some(&data_manager::EventSortKey::Title), None, Some(&cat1))
+            .get_events(Some(&EventSortKey::Title), None, Some(&cat1))
             .unwrap(),
         vec![event1, event2, event3]
     );

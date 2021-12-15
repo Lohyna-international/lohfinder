@@ -12,3 +12,5 @@ chrono = "*"
 serde = {version = "1.0.0", features=["derive",]}
 sled = "*"
 serde_json = "*"
+tokio-test = "*"
+futures = "*"
