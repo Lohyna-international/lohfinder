@@ -5,24 +5,17 @@ import random
 import json
 import time
 import threading
+import uuid
+from result_watcher import ResultWatcher
 
 
 SUBSCRIPTIONS_PATH = "projects/lohfinder-app/subscriptions/"
 PROJECT_ID = "lohfinder-app"
 pubsub_manager = PubSubManager(SUBSCRIPTIONS_PATH, PROJECT_ID)
+users_result_watcher = ResultWatcher(pubsub_manager, "user_service_result-sub", lambda m : m.message_id) # how to get message_id?
 
-MIN_INT = 100000
-MAX_INT = 1000000
-
-
-result = ""
-
-def ack_message(message):
-    print(f"Received message : {message.data}")
-    message.ack()
-    global result
-    result = json.loads(message.data)
-    
+def get_id():
+    return uuid.uuid4().int & (1<<64)-1
 
 @api_view(['GET'])
 def index(request):
@@ -34,9 +27,9 @@ def index(request):
 
 @api_view(['GET'])
 def get_all_users(request):
-    message_id = str(random.randint(MIN_INT, MAX_INT))
+    message_id = get_id()
     pubsub_manager.publish("users_get", "", message_id)
-    threading.Thread(target = pubsub_manager.subscribe, args=["user_service_result-sub", ack_message]).start()
-    time.sleep(3)
-    global result
-    return Response(result)
+    mutex = threading.Lock()
+    users_result_watcher.add_watcher(mutex, message_id)
+    with mutex:
+        return Response(users_result_watcher.get_result(message_id))
