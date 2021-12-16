@@ -1,5 +1,5 @@
 # This is a development compose file.
-version: "3.8"
+version: "3.3"
 services:
   event-application-service:
     container_name: docker_event_application_service
@@ -18,4 +18,7 @@ services:
       - 8000:8000
     env_file:
       - ./services/api_service/.env.dev
+  user_service:
+    build: ./services/user_service
+    command: python3 main.py
 
