@@ -4,6 +4,8 @@
 services/user_service/env/
 services/user_service/__pycache__/
 services/api_service/.env.dev
-key.json
+secrets/*
 services/eventservice/target
 services/eventservice/test
+services/userappservice/target
+services/userappservice/test
