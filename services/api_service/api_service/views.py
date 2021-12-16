@@ -6,16 +6,16 @@ import json
 import time
 import threading
 import uuid
-from result_watcher import ResultWatcher
+from api_service.result_watcher import ResultWatcher
 
 
 SUBSCRIPTIONS_PATH = "projects/lohfinder-app/subscriptions/"
 PROJECT_ID = "lohfinder-app"
 pubsub_manager = PubSubManager(SUBSCRIPTIONS_PATH, PROJECT_ID)
-users_result_watcher = ResultWatcher(pubsub_manager, "user_service_result-sub", lambda m : m.message_id) # how to get message_id?
+users_result_watcher = ResultWatcher(pubsub_manager, "user_service_result-sub", lambda m : m.attributes["message_id"])
 
 def get_id():
-    return uuid.uuid4().int & (1<<64)-1
+    return str(uuid.uuid4().int & (1<<64)-1)
 
 @api_view(['GET'])
 def index(request):

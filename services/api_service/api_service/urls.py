@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.urls import path
-from .views import index
+import api_service.views as views
 
 urlpatterns = [
-    path('api/', index),
+    path('api/', views.index),
+    path('api/get-all-users/', views.get_all_users)
 ]
