@@ -17,8 +17,9 @@ class ResultWatcher:
         while len(self._results) > self.MAX_ITEMS:
             self._results.popitem(False)
         id = self._get_id(message)
-        self._results[id] = json.loads(message.data.decode("utf-8"))
-        self._mutexes.pop(id).release()
+        if id in self._mutexes.keys():
+            self._results[id] = json.loads(message.data.decode("utf-8"))
+            self._mutexes.pop(id).release()
 
     def add_watcher(self, mutex : threading.Lock, message_id):
         mutex.acquire()
