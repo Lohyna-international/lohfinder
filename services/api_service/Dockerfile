@@ -9,7 +9,9 @@ RUN adduser -D user
 USER user
 
 RUN pip3 install --upgrade pip
-COPY ./requirements.txt .
+COPY ./services/api_service/requirements.txt .
+COPY ./secrets/google_cloud.json .
+COPY ./secrets/.env.dev .
 RUN pip3 install -r requirements.txt
 
-COPY . .
+COPY ./services/api_service/ .
