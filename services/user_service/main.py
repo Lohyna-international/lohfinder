@@ -16,4 +16,4 @@ subs = {
 
 if __name__ == "__main__":
     for i in subs:
-        threading.Thread(target=pubsub_manager.subscribe, args=[i, subs[i]]).start()
+        threading.Thread(target=pubsub_manager.setup_subscriber, args=[i, subs[i]]).start()

@@ -11,7 +11,7 @@ class PubSubManager:
         self.__subscriber_path = sub_path
         self.__project_id = project_id
 
-    def subscribe(self, subscription, callback):
+    def setup_subscriber(self, subscription, callback):
         path = self.__subscriber_path + subscription
 
         print(f"Listening messages on {path}")
@@ -23,7 +23,7 @@ class PubSubManager:
                 user_pull.result()
             except:
                 user_pull.cancel()
-                user_pull.result()
+                os._exit(1)
 
     def publish(self, topic, message, message_id):
         topic_path = self.__publisher.topic_path(self.__project_id, topic)
