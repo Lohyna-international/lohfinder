@@ -21,4 +21,18 @@ services:
   user_service:
     build: ./services/user_service
     command: python3 main.py
+  event_service:
+    container_name: event_service
+    build:
+      context: ./
+      dockerfile: ./services/eventservice/Dockerfile
+    volumes:
+      - '~/servicedata:/data/eventservice/db'
+  user_app_service:
+    container_name: user_app_service
+    build:
+      context: ./
+      dockerfile: ./services/userappservice/Dockerfile
+    volumes:
+      - '~/servicedata:/data/uappservice/db'
 
