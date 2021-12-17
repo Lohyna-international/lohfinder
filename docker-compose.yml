@@ -31,12 +31,12 @@ services:
       context: ./
       dockerfile: ./services/eventservice/Dockerfile
     volumes:
-      - '~/servicedata:/data/eventservice/db'
+      - '~/servicedata/event/:/data/eventservice'
   user_app_service:
     container_name: user_app_service
     build:
       context: ./
       dockerfile: ./services/userappservice/Dockerfile
     volumes:
-      - '~/servicedata:/data/uappservice/db'
+      - '~/servicedata/uapp/:/data/uappservice'
 
