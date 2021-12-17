@@ -81,7 +81,7 @@ impl EventManager {
             .map(|b| u64::from_be_bytes(*b))
             .collect::<Vec<u64>>()
     }
-
+    #[allow(dead_code)]
     pub fn reset_all(&self) -> Result<bool, Box<dyn std::error::Error>> {
         self.db.drop_tree(self.events_name.clone())?;
         self.db.drop_tree(self.organizers_name.clone())?;

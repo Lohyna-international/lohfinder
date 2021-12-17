@@ -3,7 +3,7 @@ FROM python:3.8
 WORKDIR /user_service
 
 COPY ./services/user_service/requirements.txt .
-COPY ./secrets/google_cloud.json .
+COPY ./secrets/key.json .
 COPY ./secrets/firebase.json .
 COPY ./secrets/firebase_test.json .
 

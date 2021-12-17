@@ -1,7 +1,7 @@
 import os
 from google.cloud import pubsub_v1
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getcwd() + "/google_cloud.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
 
 
 class PubSubManager:
