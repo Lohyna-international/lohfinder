@@ -20,7 +20,22 @@ def get_id():
 @api_view(['GET'])
 def index(request):
     context = {
-        "method name" : "method url"
+        "Get all users" : "/api/get-all-users",
+        "Delete all users" : "/api/delete-all-users",
+        "Update user" : "/api/update-user/<user_id:int>",
+        "Save user" : "/api/save-user",
+        "Get user by id" : "/api/get-user-by-id/<user_id:int>",
+        "Get user by email" : "/api/get-user-by-email/<email:str>",
+        "Delete user by id" : "/api/delete-user-by-id/<user_id:int>",
+        "Delete user by email" : "/api/delete-user-by-email/<email:str>",
+        "Get all events" : "/api/get-all-events",
+        "Update an event" : "/api/update-event/<event_id:int>",
+        "Get event by id" : "/api/get-event/<event_id:int>",
+        "Delete event" : "/api/delete-event/<event_id:int>",
+        "Create event" : "/api/create-event",
+        "Update event application form" : "/api/update-event-application/<ea_id:int>",
+        "Create event application form" : "/api/create-event-application/",
+        "Delete event application form" : "/api/delete-event-application/<ea_id:int>",
     }
     return Response(context) 
 

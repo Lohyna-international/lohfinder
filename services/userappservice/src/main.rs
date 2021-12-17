@@ -8,7 +8,7 @@ mod types;
 
 #[tokio::main]
 async fn main() {
-    let path_to_db = "./test/db";
+    let path_to_db = "/data/uappservice/db";
     let keys = "./key.json";
     let manager = EventManager::new(&path_to_db.to_string()).expect("Failed to create database");
     let client = PubSubClient::new(keys.to_string(), manager)

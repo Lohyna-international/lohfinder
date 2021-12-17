@@ -1,5 +1,5 @@
 # This is a development compose file.
-version: "3.8"
+version: "3.3"
 services:
   event-application-service:
     container_name: docker_event_application_service
@@ -10,7 +10,9 @@ services:
     environment:
       - APP_NAME=lohfinder-app
   api_service:
-    build: ./services/api_service
+    build: 
+      context : ./
+      dockerfile : ./services/api_service/Dockerfile
     command: python3 manage.py runserver 0.0.0.0:8000
     volumes:
       - ./services/api_service:/usr/src/api_service/
@@ -18,4 +20,23 @@ services:
       - 8000:8000
     env_file:
       - ./services/api_service/.env.dev
+  user_service:
+    build: 
+      context : ./
+      dockerfile : ./services/user_service/Dockerfile
+    command: python3 main.py
+  event_service:
+    container_name: event_service
+    build:
+      context: ./
+      dockerfile: ./services/eventservice/Dockerfile
+    volumes:
+      - '~/servicedata/event/:/data/eventservice'
+  user_app_service:
+    container_name: user_app_service
+    build:
+      context: ./
+      dockerfile: ./services/userappservice/Dockerfile
+    volumes:
+      - '~/servicedata/uapp/:/data/uappservice'
 

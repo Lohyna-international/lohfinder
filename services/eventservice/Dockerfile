@@ -3,9 +3,10 @@ FROM rust:latest
 WORKDIR /usr/src/app
 
 RUN rustup default nightly
-COPY ./src ./src
-COPY ./Cargo.toml .
-COPY ./start.sh ./start.sh
+COPY ./services/eventservice/src ./src
+COPY ./services/eventservice/Cargo.toml .
+COPY ./secrets/key.json ./key.json
+RUN mkdir -p /data/eventservice/db
 RUN cargo build --release
 
-ENTRYPOINT [ "/bin/bash", "start.sh" ]
+ENTRYPOINT [ "cargo", "run", "--release"]

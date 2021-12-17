@@ -46,7 +46,7 @@ impl PubSubClient {
             manager,
         })
     }
-
+    #[allow(dead_code)]
     pub fn clean_db(&self) -> bool {
         self.manager.reset_all().unwrap_or(false)
     }
